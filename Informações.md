@@ -12,7 +12,7 @@ O projeto será programado inteiramente em "Assembly" usando a arquitetura MIPS.
 
 #Links:
 * Link para o download do Mars: http://courses.missouristate.edu/KenVollmar/mars/
-* Tutorial MIPS: https://www.youtube.com/watch?v=u5Foo6mmW0I&list=PL5b07qlmA3P6zUdDf-o97ddfpvPFuNa5A
+* Tutorial MIPS: http://bit.ly/2d61DLv
 
 #Pacotinhos:
 * Amor
