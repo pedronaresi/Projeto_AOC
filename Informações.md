@@ -13,4 +13,8 @@ O projeto será programado inteiramente em "Assembly" usando a arquitetura MIPS.
 #Links:
 Link para o download do Mars: http://courses.missouristate.edu/KenVollmar/mars/
 
-Foda-se
+#Pacotinhos:
+Amor
+
+#Pacotões
+Dor
