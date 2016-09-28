@@ -38,8 +38,8 @@ NewGame:
 	jal TETRIS
 	
 TelaPreta:
-		lw $t0, corFundo
-		li $t1, 16384 # O Numero de pixels do Display
+		lw $t0, corMargem
+		li $t1, 16136 # O Numero de pixels do Display
 	StartCLoop:
 		subi $t1, $t1, 4
 		addu $t2, $t1, $gp
