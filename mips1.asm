@@ -28,8 +28,8 @@ NewGame:
 		li $a3, 18 
 		jal DrawHorizontalLine
 		
-		#li $a1, 14
-		#jal DrawHorizontalLine
+		li $a1, 14
+		jal DrawHorizontalLine
 		
 		li $a0, 46
 		li $a3, 54

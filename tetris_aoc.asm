@@ -2,7 +2,7 @@
 ######################################################################
 # 			     Tetris                                  #
 ######################################################################
-#  Programado por: Pedro Naresi, Jaime Ossada, Bruno Ogata, Joao     #
+#  Developed by: Pedro Naresi, Jaime Ossada, Bruno Ogata, Joao       #
 # Mesquita							     #
 ######################################################################
 #	This program requires the Keyboard and Display MMIO          #
@@ -38,7 +38,7 @@ NewGame:
 	jal TETRIS
 	
 TelaPreta:
-		lw $t0, corMargem
+		lw $t0, corFundo
 		li $t1, 16136 # O Numero de pixels do Display
 	StartCLoop:
 		subi $t1, $t1, 4
@@ -50,78 +50,135 @@ TelaPreta:
 		jr $ra
 
 TETRIS:
-		li $a0, 21
-		li $a1, 13
-		lw $a2, corblocoO
-		li $a3, 18
+		li $a0, 4				# $a0 the x coordinate
+		li $a1, 3				# $a1 the y starting coordinate
+		lw $a2, corMargem			# $a2 the color
+		li $a3, 59				# $a3 the x ending coordinate
 		jal DrawHorizontalLine
 		
-		li $a0, 27
+		li $a1, 2
+		jal DrawHorizontalLine	
+		
+		li $a1, 4
+		jal DrawHorizontalLine
+		
+		li $a1, 24				
+		jal DrawHorizontalLine
+		
+		li $a1, 25
+		jal DrawHorizontalLine	
+		
+		li $a1, 26
+		jal DrawHorizontalLine
+		
+		#Desenha "T"
+		li $a0, 4		
+		li $a1, 7
+		lw $a2, corblocoZ
+		li $a3, 12
+		jal DrawHorizontalLine
+		
+		li $a1, 8
+		jal DrawHorizontalLine
+		
+		li $a1, 9
+		jal DrawHorizontalLine
+		
+		li $a0, 7
+		li $a1, 10
+		li $a3, 21
+		jal DrawVerticalLine
+		
+		li $a0, 8
+		jal DrawVerticalLine
+		li $a0, 9
+		jal DrawVerticalLine
+		
+		#Desenha "E"
+		
+		li $a0, 15
+		li $a1, 7
+		lw $a2, corblocoL
+		jal DrawVerticalLine
+		
+		li $a0, 16
+		jal DrawVerticalLine
+		
+		li $a0, 17
+		jal DrawVerticalLine
+		
+		li $a0, 18
+		li $a3 24
+		jal DrawHorizontalLine
+		
+		li $a1, 8
+		jal DrawHorizontalLine
+		
+		li $a1, 9
+		jal DrawHorizontalLine
+		
+		li $a1, 21
+		jal DrawHorizontalLine
+		
+		li $a1, 20
+		jal DrawHorizontalLine
+		
+		li $a1, 19
+		jal DrawHorizontalLine
+		
+		li $a1, 13
+		li $a3, 21
+		jal DrawHorizontalLine
+		
+		li $a1, 14
+		jal DrawHorizontalLine
+		
+		li $a1, 15
+		jal DrawHorizontalLine
+		
+		#Desenha "T"
+		li $a0, 27	
+		li $a1, 7
+		lw $a2, corblocoO
+		li $a3, 35
+		jal DrawHorizontalLine
+		
+		li $a1, 8
+		jal DrawHorizontalLine
+		
+		li $a1, 9
+		jal DrawHorizontalLine
+		
+		li $a0, 30
+		li $a1, 10
+		li $a3, 21
 		jal DrawVerticalLine
 		
 		li $a0, 31
 		jal DrawVerticalLine
-		
-		li $a0, 33
+		li $a0, 32
 		jal DrawVerticalLine
 		
-		li $a0, 37
+		#Desenha "R"
+		li $a0, 39
+		li $a1, 7
+		lw $a2, corblocoS
+		li $a3, 20
 		jal DrawVerticalLine
 		
 		li $a0, 39
 		jal DrawVerticalLine
 		
-		li $a0, 34 
-		li $a1, 13
-		li $a3, 14
-		jal DrawVerticalLine
-	
-		li $a0, 35
-		li $a1, 15
-		li $a3, 16
-		jal DrawVerticalLine
-		
-		li $a0, 25
-		li $a1, 14
-		jal DrawVerticalLine
-		
-		li $a0, 22
-		li $a1, 16
-		li $a3, 24
-		#jal DrawHorizontalLine
-	
-		li $a0, 22
-		li $a1, 16
-		li $a3, 25
-		#jal DrawHorizontalLine
-	
-		li $a1, 13
-		#jal DrawHorizontalLine
-		
-		li $a0, 27
-		li $a3, 30
-		jal DrawHorizontalLine
-	
-		li $a1, 18
-		jal DrawHorizontalLine
-		
 		li $a0, 40
-		li $a3, 43
-		jal DrawHorizontalLine
-		
-		li $a1, 13
-		jal DrawHorizontalLine
+		jal DrawVerticalLine
 		
 		li $a0, 41
-		li $a1, 16
+		li $a3, 45
 		jal DrawHorizontalLine
 		
-		li $a0, 36
-		li $a1, 17
-		jal DrawPoint
 		
-		li $a0, 43
-		jal DrawPoint
+		
+		jr $ra
 		
 DrawHorizontalLine:
 		
