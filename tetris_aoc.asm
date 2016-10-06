@@ -50,10 +50,10 @@ TelaPreta:
 		jr $ra
 
 TETRIS:
-		li $a0, 4				# $a0 the x coordinate
+		li $a0, 2				# $a0 the x coordinate
 		li $a1, 3				# $a1 the y starting coordinate
 		lw $a2, corMargem			# $a2 the color
-		li $a3, 59				# $a3 the x ending coordinate
+		li $a3, 61				# $a3 the x ending coordinate
 		jal DrawHorizontalLine
 		
 		li $a1, 2
@@ -72,10 +72,10 @@ TETRIS:
 		jal DrawHorizontalLine
 		
 		#Desenha "T"
-		li $a0, 4		
+		li $a0, 2		
 		li $a1, 7
 		lw $a2, corblocoZ
-		li $a3, 12
+		li $a3, 10
 		jal DrawHorizontalLine
 		
 		li $a1, 8
@@ -84,31 +84,31 @@ TETRIS:
 		li $a1, 9
 		jal DrawHorizontalLine
 		
-		li $a0, 7
+		li $a0, 5
 		li $a1, 10
 		li $a3, 21
 		jal DrawVerticalLine
 		
-		li $a0, 8
+		li $a0, 6
 		jal DrawVerticalLine
-		li $a0, 9
+		li $a0, 7
 		jal DrawVerticalLine
 		
 		#Desenha "E"
 		
-		li $a0, 15
+		li $a0, 13
 		li $a1, 7
 		lw $a2, corblocoL
 		jal DrawVerticalLine
 		
+		li $a0, 14
+		jal DrawVerticalLine
+		
+		li $a0, 15
+		jal DrawVerticalLine
+		
 		li $a0, 16
-		jal DrawVerticalLine
-		
-		li $a0, 17
-		jal DrawVerticalLine
-		
-		li $a0, 18
-		li $a3 24
+		li $a3 21
 		jal DrawHorizontalLine
 		
 		li $a1, 8
@@ -127,7 +127,7 @@ TETRIS:
 		jal DrawHorizontalLine
 		
 		li $a1, 13
-		li $a3, 21
+		li $a3, 19
 		jal DrawHorizontalLine
 		
 		li $a1, 14
@@ -137,10 +137,10 @@ TETRIS:
 		jal DrawHorizontalLine
 		
 		#Desenha "T"
-		li $a0, 27	
+		li $a0, 24	
 		li $a1, 7
 		lw $a2, corblocoO
-		li $a3, 35
+		li $a3, 32
 		jal DrawHorizontalLine
 		
 		li $a1, 8
@@ -149,34 +149,162 @@ TETRIS:
 		li $a1, 9
 		jal DrawHorizontalLine
 		
-		li $a0, 30
+		li $a0, 27
 		li $a1, 10
 		li $a3, 21
 		jal DrawVerticalLine
 		
-		li $a0, 31
+		li $a0, 28
 		jal DrawVerticalLine
-		li $a0, 32
+		li $a0, 29
 		jal DrawVerticalLine
 		
 		#Desenha "R"
-		li $a0, 39
+		li $a0, 35
 		li $a1, 7
 		lw $a2, corblocoS
-		li $a3, 20
+		li $a3, 21
 		jal DrawVerticalLine
 		
-		li $a0, 39
+		li $a0, 36
 		jal DrawVerticalLine
 		
-		li $a0, 40
+		li $a0, 37
 		jal DrawVerticalLine
 		
-		li $a0, 41
-		li $a3, 45
+		li $a0, 38
+		li $a3, 42
 		jal DrawHorizontalLine
 		
+		li $a1, 8
+		li $a3, 43
+		jal DrawHorizontalLine
 		
+		li $a1, 9
+		jal DrawHorizontalLine
+		
+		li $a0, 41
+		li $a1, 10
+		li $a3, 43
+		jal DrawHorizontalLine
+		
+		li $a1, 11
+		jal DrawHorizontalLine
+		
+		li $a1, 12
+		jal DrawHorizontalLine
+		
+		li $a1, 13
+		li $a0, 38
+		jal DrawHorizontalLine
+		
+		li $a3, 42
+		li $a1, 14
+		jal DrawHorizontalLine
+		
+		li $a0, 38
+		li $a3, 39
+		li $a1, 15
+		jal DrawHorizontalLine
+		
+		li $a1, 16
+		li $a3, 40
+		jal DrawHorizontalLine
+		
+		li $a0, 39
+		li $a3, 41
+		li $a1, 17
+		jal DrawHorizontalLine
+		
+		li $a1, 18
+		li $a0, 40
+		li $a3, 42
+		jal DrawHorizontalLine
+		
+		li $a0, 41
+		li $a3, 43
+		li $a1, 19
+		jal DrawHorizontalLine
+		
+		li $a1, 20
+		li $a0, 42
+		li $a3, 43
+		jal DrawHorizontalLine
+		
+		li $a1, 21
+		jal DrawHorizontalLine
+		
+		#Desenha "I"
+		
+		li $a0, 46
+		li $a1, 7
+		lw $a2, corblocoI
+		li $a3, 21
+		jal DrawVerticalLine
+		
+		li $a0, 47
+		jal DrawVerticalLine
+		
+		li $a0, 48
+		jal DrawVerticalLine
+		
+		#Desenha "S"
+		
+		li $a0, 52
+		li $a1, 7
+		lw $a2, corblocoT
+		li $a3, 61
+		jal DrawHorizontalLine
+		
+		li $a0, 51
+		li $a1, 8
+		jal DrawHorizontalLine
+		
+		li $a1, 9
+		jal DrawHorizontalLine
+		
+		li $a1, 10
+		li $a3, 53
+		jal DrawHorizontalLine
+		
+		li $a1, 11
+		jal DrawHorizontalLine
+		
+		li $a1, 12
+		jal DrawHorizontalLine
+		
+		li $a1, 13
+		li $a3, 60
+		jal DrawHorizontalLine
+		
+		li $a1, 14
+		li $a3, 61
+		jal DrawHorizontalLine
+		
+		li $a0, 52
+		li $a1, 15
+		jal DrawHorizontalLine
+		
+		li $a0, 59
+		li $a1, 16
+		jal DrawHorizontalLine
+		
+		li $a1, 17
+		jal DrawHorizontalLine
+		
+		li $a1, 18
+		jal DrawHorizontalLine
+		
+		li $a0, 51
+		li $a1, 19
+		jal DrawHorizontalLine
+		
+		li $a1, 20
+		jal DrawHorizontalLine
+		
+		li $a1, 21
+		li $a3, 60
+		jal DrawHorizontalLine
 		
 		jr $ra
 		
