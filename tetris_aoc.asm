@@ -27,6 +27,7 @@
 	corblocoZ:		.word 0x00ff0000		#Cor do bloco Z: Vermelho
 	corMargem:		.word 0x00ffffff		#Cor da Margem: Branco
 	corFundo:		.word 0x00000000		#Cor do Fundo: Preto
+	mode:			.word 0
 .text
 
 ######################################################
@@ -35,21 +36,8 @@
 
 NewGame:
 	jal TelaPreta
-	jal TETRIS
 	
-TelaPreta:
-		lw $t0, corFundo
-		li $t1, 16136 # O Numero de pixels do Display
-	StartCLoop:
-		subi $t1, $t1, 4
-		addu $t2, $t1, $gp
-		sw $t0, ($t2)
-		beqz $t1, EndCLoop
-		j StartCLoop
-	EndCLoop:
-		jr $ra
-
-TETRIS:
+	TETRIS:
 		li $a0, 2				# $a0 the x coordinate
 		li $a1, 3				# $a1 the y starting coordinate
 		lw $a2, corMargem			# $a2 the color
@@ -304,6 +292,316 @@ TETRIS:
 		
 		li $a1, 21
 		li $a3, 60
+		jal DrawHorizontalLine
+		
+	PressOne:
+		#Desenha P
+		
+		li $a0, 18
+		li $a1, 39
+		lw $a2, corMargem
+		li $a3, 20
+		jal DrawHorizontalLine
+		
+		li $a0, 18
+		li $a1, 40
+		li $a3, 18
+		jal DrawHorizontalLine
+		
+		li $a0, 21
+		li $a3,21
+		jal DrawHorizontalLine
+		
+		li $a0, 18
+		li $a1, 41
+		li $a3, 18
+		jal DrawHorizontalLine
+		
+		li $a0, 21
+		li $a3, 21
+		jal DrawHorizontalLine
+		
+		li $a0, 18
+		li $a1, 42
+		li $a3, 20
+		jal DrawHorizontalLine
+		
+		li $a0, 18
+		li $a1, 43
+		li $a3, 18
+		jal DrawHorizontalLine
+		
+		li $a0, 18
+		li $a1, 44
+		li $a3, 18
+		jal DrawHorizontalLine
+		
+		li $a0, 18
+		li $a1, 45
+		li $a3, 18
+		jal DrawHorizontalLine
+				
+		#Desenha R
+		li $a0, 24
+		li $a1, 39
+		li $a3, 26
+		jal DrawHorizontalLine
+		
+		li $a0, 24
+		li $a1, 40
+		li $a3, 24
+		jal DrawHorizontalLine
+		
+		li $a0, 27
+		li $a1, 40
+		li $a3, 27
+		jal DrawHorizontalLine
+		
+		li $a0, 24
+		li $a1, 41
+		li $a3, 24
+		jal DrawHorizontalLine
+		
+		li $a0, 27
+		li $a1, 41
+		li $a3, 27
+		jal DrawHorizontalLine
+		
+		li $a0, 24
+		li $a1, 42
+		li $a3, 26
+		jal DrawHorizontalLine
+		
+		li $a0, 24
+		li $a1, 43
+		li $a3, 24
+		jal DrawHorizontalLine
+		
+		li $a0, 27
+		li $a1, 43
+		li $a3, 27
+		jal DrawHorizontalLine
+		
+		li $a0, 24
+		li $a1, 44
+		li $a3, 24
+		jal DrawHorizontalLine
+		
+		li $a0, 27
+		li $a1, 44
+		li $a3, 27
+		jal DrawHorizontalLine
+		
+		li $a0, 24
+		li $a1, 45
+		li $a3, 24
+		jal DrawHorizontalLine
+		
+		li $a0, 27
+		li $a1, 45
+		li $a3, 27
+		jal DrawHorizontalLine
+		
+		#Desenha E
+		li $a0, 30
+		li $a1, 39
+		li $a3, 33
+		jal DrawHorizontalLine
+		
+		li $a0, 30
+		li $a1, 40
+		li $a3, 30
+		jal DrawHorizontalLine
+		
+		li $a0, 30
+		li $a1, 41
+		li $a3, 30
+		jal DrawHorizontalLine
+	
+		li $a0, 30
+		li $a1, 42
+		li $a3, 32
+		jal DrawHorizontalLine
+		
+		li $a0, 30
+		li $a1, 43
+		li $a3, 30
+		jal DrawHorizontalLine
+		
+		li $a0, 30
+		li $a1, 44
+		li $a3, 30
+		jal DrawHorizontalLine
+		
+		li $a0, 30
+		li $a1, 45
+		li $a3, 33
+		jal DrawHorizontalLine
+		
+		#Desenha S
+		
+		li $a0, 36
+		li $a1, 39
+		li $a3, 39
+		jal DrawHorizontalLine
+		
+		li $a0, 36
+		li $a1, 40
+		li $a3, 36
+		jal DrawHorizontalLine
+		
+		li $a0, 36
+		li $a1, 41
+		li $a3, 36
+		jal DrawHorizontalLine
+		
+		li $a0, 36
+		li $a1, 42
+		li $a3, 39
+		jal DrawHorizontalLine
+		
+		li $a0, 39
+		li $a1, 43
+		li $a3, 39
+		jal DrawHorizontalLine
+		
+		li $a0, 39
+		li $a1, 44
+		li $a3, 39
+		jal DrawHorizontalLine
+		
+		li $a0, 36
+		li $a1, 45
+		li $a3, 39
+		jal DrawHorizontalLine
+		
+		#Desenha S
+		
+		li $a0, 42
+		li $a1, 39
+		li $a3, 45
+		jal DrawHorizontalLine
+		
+		li $a0, 42
+		li $a1, 40
+		li $a3, 42
+		jal DrawHorizontalLine
+		
+		li $a0, 42
+		li $a1, 41
+		li $a3, 42
+		jal DrawHorizontalLine
+		
+		li $a0, 42
+		li $a1, 42
+		li $a3, 45
+		jal DrawHorizontalLine
+		
+		li $a0, 45
+		li $a1, 43
+		li $a3, 45
+		jal DrawHorizontalLine
+		
+		li $a0, 45
+		li $a1, 44
+		li $a3, 45
+		jal DrawHorizontalLine
+		
+		li $a0, 42
+		li $a1, 45
+		li $a3, 45
+		jal DrawHorizontalLine
+		
+		#Desenha 1
+		
+		li $a0, 31
+		li $a1, 49
+		li $a3, 32
+		jal DrawHorizontalLine
+		
+		li $a0, 32
+		li $a1, 50
+		li $a3, 32
+		jal DrawHorizontalLine
+		
+		li $a0, 32
+		li $a1, 51
+		li $a3, 32
+		jal DrawHorizontalLine
+		
+		li $a0, 32
+		li $a1, 52
+		li $a3, 32
+		jal DrawHorizontalLine
+		
+		li $a0, 32
+		li $a1, 53
+		li $a3, 32
+		jal DrawHorizontalLine
+		
+		li $a0, 32
+		li $a1, 54
+		li $a3, 32
+		jal DrawHorizontalLine
+		
+		li $a0, 31
+		li $a1, 55
+		li $a3, 33
+		jal DrawHorizontalLine
+		
+SelectMode:
+		lw $t1, 0xFFFF0004		# check to see which key has been pressed
+		beq $t1, 0x00000031, ComecaJogo # 1 pressed
+		
+		li $a0, 500	#
+		li $v0, 32	# pause for 250 milisec
+		syscall		#
+		
+		j SelectMode    # Jump back to the top of the wait loop
+		
+ComecaJogo:
+	jal ZeraBotoes
+	jal TelaPreta
+	jal TelaJogo
+	
+	
+	
+TelaPreta:
+		lw $t0, corFundo
+		li $t1, 16136 # O Numero de pixels do Display
+	StartCLoop:
+		subi $t1, $t1, 4
+		addu $t2, $t1, $gp
+		sw $t0, ($t2)
+		beqz $t1, EndCLoop
+		j StartCLoop
+	EndCLoop:
+		jr $ra
+		
+ZeraBotoes:
+		sw $zero, 0xFFFF0000		# clear the button pushed bit
+		jr $ra
+
+TelaJogo:
+		li $a0, 2				# $a0 the x coordinate
+		li $a1, 3				# $a1 the y starting coordinate
+		lw $a2, corMargem			# $a2 the color
+		li $a3, 61				# $a3 the x ending coordinate
+		jal DrawHorizontalLine
+		
+		li $a1, 2
+		jal DrawHorizontalLine	
+		
+		li $a1, 4
+		jal DrawHorizontalLine
+		
+		li $a1, 24				
+		jal DrawHorizontalLine
+		
+		li $a1, 25
+		jal DrawHorizontalLine	
+		
+		li $a1, 26
 		jal DrawHorizontalLine
 		
 		jr $ra
