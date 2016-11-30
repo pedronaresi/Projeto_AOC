@@ -18,13 +18,14 @@
 ######################################################################
 
 .data
-	corblocoI:		.word 0x0000ffff		#Cor do bloco I: Azul claro
-	corblocoJ:		.word 0x000000cd		#Cor do bloco J: Azul escuro
-	corblocoL:		.word 0x00ffa500		#Cor do bloco L: Laranja
-	corblocoO:		.word 0x00ffff00		#Cor do bloco O: Amarelo
-	corblocoS:		.word 0x0000ff00		#Cor do bloco S: Verde
-	corblocoT:		.word 0x009400d3		#Cor do bloco T: Roxo
-	corblocoZ:		.word 0x00ff0000		#Cor do bloco Z: Vermelho
+	corblocoI:		.word 0x0000ffff		#Cor do Bloco I: Azul claro
+	corblocoJ:		.word 0x000000cd		#Cor do Bloco J: Azul escuro
+	corblocoL:		.word 0x00ffa500		#Cor do Bloco L: Laranja
+	corblocoO:		.word 0x00ffff00		#Cor do Bloco O: Amarelo
+	corblocoS:		.word 0x0000ff00		#Cor do Bloco S: Verde
+	corblocoT:		.word 0x009400d3		#Cor do Bloco T: Roxo
+	corblocoZ:		.word 0x00ff0000		#Cor do Bloco Z: Vermelho
+	corMargemJogo:		.word 0x00c0c0c0		#Cor da Margem Jogo: Silver
 	corMargem:		.word 0x00ffffff		#Cor da Margem: Branco
 	corFundo:		.word 0x00000000		#Cor do Fundo: Preto
 	mode:			.word 0
@@ -548,6 +549,9 @@ NewGame:
 		li $a1, 55
 		li $a3, 33
 		jal DrawHorizontalLine
+		
+		
+		
 
 SelectMode:
 		lw $t1, 0xFFFF0004		# check to see which key has been pressed
@@ -559,12 +563,169 @@ SelectMode:
 
 		j SelectMode    # Jump back to the top of the wait loop
 
+
 ComecaJogo:
 	jal ZeraBotoes
 	jal TelaPreta
 	jal TelaJogo
 
+TelaJogo:
+		#Margem de cima
+		li $a0, 0
+		li $a1, 0
+		lw $a2, corMargemJogo
+		li $a3, 63
+		jal DrawHorizontalLine
+		
+		li $a0, 0
+		li $a1, 1
+		li $a3, 63
+		jal DrawHorizontalLine
+		
 
+		#Margem de baixo
+		li $a0, 0
+		li $a1, 63
+		li $a3, 63
+		jal DrawHorizontalLine
+		
+		li $a0, 0
+		li $a1, 62
+		li $a3, 63
+		jal DrawHorizontalLine
+		
+		#Margem Lateral Esquerda
+		li $a0, 0
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 1
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		
+		#Margem Lateral Direita 
+		li $a0, 41
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 42
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 43
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 44
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 45
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+	
+		li $a0, 46
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+			
+		li $a0, 47
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+			
+		li $a0, 48
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+			
+		li $a0, 49
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine		
+			
+		li $a0, 50
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 51
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+			
+		li $a0, 52
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine						
+		
+		li $a0, 53
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine	
+		
+		li $a0, 54
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+																																																																																
+		li $a0, 55
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 56
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 57
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 58
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 59
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 60
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 61
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 62
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		li $a0, 63
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		
+		#Bloco Tetris
+		
+		
+		jr $ra
 
 TelaPreta:
 		lw $t0, corFundo
@@ -582,29 +743,7 @@ ZeraBotoes:
 		sw $zero, 0xFFFF0000		# clear the button pushed bit
 		jr $ra
 
-TelaJogo:
-		li $a0, 2				# $a0 the x coordinate
-		li $a1, 3				# $a1 the y starting coordinate
-		lw $a2, corMargem			# $a2 the color
-		li $a3, 61				# $a3 the x ending coordinate
-		jal DrawHorizontalLine
 
-		li $a1, 2
-		jal DrawHorizontalLine
-
-		li $a1, 4
-		jal DrawHorizontalLine
-
-		li $a1, 24
-		jal DrawHorizontalLine
-
-		li $a1, 25
-		jal DrawHorizontalLine
-
-		li $a1, 26
-		jal DrawHorizontalLine
-
-		jr $ra
 
 	# $a0 the x starting coordinate
 	# $a1 the y coordinate
@@ -667,6 +806,7 @@ DrawPoint:
 		sw $a2, ($v0)		# draw the color to the location
 
 		jr $ra
+		
 
 # $a0 the x starting coordinate
 # $a1 the y coordinate
