@@ -29,13 +29,13 @@
 	corMargem:		.word 0x00ffffff		#Cor da Margem: Branco
 	corFundo:		.word 0x00000000		#Cor do Fundo: Preto
 	mode:			.word 0
-	IDblocoI: 		.word 0							#ID para gerar o bloco I
-	IDblocoJ: 		.word 1							#ID para gerar o bloco I
-	IDblocoL: 		.word 2							#ID para gerar o bloco I
-	IDblocoO: 		.word 3							#ID para gerar o bloco I
-	IDblocoS: 		.word 4							#ID para gerar o bloco I
-	IDblocoT: 		.word 5							#ID para gerar o bloco I
-	IDblocoZ: 		.word 6							#ID para gerar o bloco I
+	IDblocoI: 		.word 0				#ID para gerar o bloco I
+	IDblocoJ: 		.word 1				#ID para gerar o bloco I
+	IDblocoL: 		.word 2				#ID para gerar o bloco I
+	IDblocoO: 		.word 3				#ID para gerar o bloco I
+	IDblocoS: 		.word 4				#ID para gerar o bloco I
+	IDblocoT: 		.word 5				#ID para gerar o bloco I
+	IDblocoZ: 		.word 6				#ID para gerar o bloco I
 	
 .text
 
@@ -753,7 +753,8 @@ ZeraBotoes:
 		sw $zero, 0xFFFF0000		# clear the button pushed bit
 		jr $ra
 
-
+DesenhaPeca:
+	
 
 	# $a0 the x starting coordinate
 	# $a1 the y coordinate
