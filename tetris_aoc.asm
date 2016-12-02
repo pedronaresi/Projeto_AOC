@@ -29,6 +29,14 @@
 	corMargem:		.word 0x00ffffff		#Cor da Margem: Branco
 	corFundo:		.word 0x00000000		#Cor do Fundo: Preto
 	mode:			.word 0
+	IDblocoI: 		.word 0							#ID para gerar o bloco I
+	IDblocoJ: 		.word 1							#ID para gerar o bloco I
+	IDblocoL: 		.word 2							#ID para gerar o bloco I
+	IDblocoO: 		.word 3							#ID para gerar o bloco I
+	IDblocoS: 		.word 4							#ID para gerar o bloco I
+	IDblocoT: 		.word 5							#ID para gerar o bloco I
+	IDblocoZ: 		.word 6							#ID para gerar o bloco I
+	
 .text
 
 ######################################################
@@ -549,9 +557,9 @@ NewGame:
 		li $a1, 55
 		li $a3, 33
 		jal DrawHorizontalLine
-		
-		
-		
+
+
+
 
 SelectMode:
 		lw $t1, 0xFFFF0004		# check to see which key has been pressed
@@ -569,6 +577,8 @@ ComecaJogo:
 	jal TelaPreta
 	jal TelaJogo
 
+
+
 TelaJogo:
 		#Margem de cima
 		li $a0, 0
@@ -576,155 +586,155 @@ TelaJogo:
 		lw $a2, corMargemJogo
 		li $a3, 63
 		jal DrawHorizontalLine
-		
+
 		li $a0, 0
 		li $a1, 1
 		li $a3, 63
 		jal DrawHorizontalLine
-		
+
 
 		#Margem de baixo
 		li $a0, 0
 		li $a1, 63
 		li $a3, 63
 		jal DrawHorizontalLine
-		
+
 		li $a0, 0
 		li $a1, 62
 		li $a3, 63
 		jal DrawHorizontalLine
-		
+
 		#Margem Lateral Esquerda
 		li $a0, 0
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 1
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
-		
-		#Margem Lateral Direita 
+
+
+		#Margem Lateral Direita
 		li $a0, 41
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 42
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 43
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 44
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 45
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-	
+
 		li $a0, 46
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-			
+
 		li $a0, 47
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-			
+
 		li $a0, 48
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-			
+
 		li $a0, 49
 		li $a1, 0
 		li $a3, 63
-		jal DrawVerticalLine		
-			
+		jal DrawVerticalLine
+
 		li $a0, 50
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 51
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-			
+
 		li $a0, 52
 		li $a1, 0
 		li $a3, 63
-		jal DrawVerticalLine						
-		
+		jal DrawVerticalLine
+
 		li $a0, 53
 		li $a1, 0
 		li $a3, 63
-		jal DrawVerticalLine	
-		
+		jal DrawVerticalLine
+
 		li $a0, 54
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-																																																																																
+
 		li $a0, 55
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 56
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 57
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 58
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 59
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 60
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 61
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 62
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		li $a0, 63
 		li $a1, 0
 		li $a3, 63
 		jal DrawVerticalLine
-		
+
 		#Bloco Tetris
-		
-		
+
+
 		jr $ra
 
 TelaPreta:
@@ -806,7 +816,7 @@ DrawPoint:
 		sw $a2, ($v0)		# draw the color to the location
 
 		jr $ra
-		
+
 
 # $a0 the x starting coordinate
 # $a1 the y coordinate
