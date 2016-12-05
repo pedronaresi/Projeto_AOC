@@ -1,4 +1,3 @@
-
 ######################################################################
 # 			     Tetris                                  #
 ######################################################################
@@ -36,16 +35,27 @@
 	IDblocoS: 		.word 4				#ID para gerar o bloco I
 	IDblocoT: 		.word 5				#ID para gerar o bloco I
 	IDblocoZ: 		.word 6				#ID para gerar o bloco I
-	
+	PieceArray:		.word 0:220			#Cria Matriz de Peças de 220 espaços com todos já inicializados com 0
+	SpawnArray:		.word 0:8			#Matriz de Próxima Peça 
 .text
+
+.globl main
+
+
+main:
+	jal NewGame
+	
+	li $v0, 10
+	syscall
 
 ######################################################
 # Deixa a tela preta
 ######################################################
 
 NewGame:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
 	jal TelaPreta
-
 	TETRIS:
 		li $a0, 2				# $a0 the x coordinate
 		li $a1, 3				# $a1 the y starting coordinate
@@ -561,7 +571,7 @@ NewGame:
 
 
 
-SelectMode:
+	SelectMode:
 		lw $t1, 0xFFFF0004		# check to see which key has been pressed
 		beq $t1, 0x00000031, ComecaJogo # 1 pressed
 
@@ -571,15 +581,31 @@ SelectMode:
 
 		j SelectMode    # Jump back to the top of the wait loop
 
-
-ComecaJogo:
-	jal ZeraBotoes
-	jal TelaPreta
-	jal TelaJogo
-
+	ComecaJogo:
+		jal ZeraBotoes
+		jal TelaPreta
+		jal TelaJogo
+		
+		#Testando funções, as chamadas abaixas serão retiradas
+		jal CopiaMemoria
+		lw $t0, corblocoZ
+		la $t1, SpawnArray
+		sw $t0, 16($t1)
+		sw $t0, 20($t1)
+		sw $t0, 24($t1)
+		sw $t0, 28($t1)
+		jal CopiaMemoriaProximaPeca
+		#Fim de Testes
+		
+		lw $ra, 0($sp)
+		addi $sp, $sp, 4
+		jr $ra
+	
 
 
 TelaJogo:
+		addi $sp, $sp, -4
+		sw $ra, 0($sp)
 		#Margem de cima
 		li $a0, 0
 		li $a1, 0
@@ -732,14 +758,55 @@ TelaJogo:
 		li $a3, 63
 		jal DrawVerticalLine
 
-		#Bloco Tetris
+		#Desenhando Espaço de Próxima Peça
+		#X Absoluto Base: 45
+		#Y Abosuluto Base: 10
+		li $a0, 45
+		li $a1 10
+		lw $a2, corFundo
+		li $a3, 55
+		jal DrawHorizontalLine
+		
+		li $a0, 45
+		li $a1 11
+		lw $a2, corFundo
+		li $a3, 55
+		jal DrawHorizontalLine
+		
+		li $a0, 45
+		li $a1 12
+		lw $a2, corFundo
+		li $a3, 55
+		jal DrawHorizontalLine
+		
+		li $a0, 45
+		li $a1 13
+		lw $a2, corFundo
+		li $a3, 55
+		jal DrawHorizontalLine
+		
+		li $a0, 45
+		li $a1 14
+		lw $a2, corFundo
+		li $a3, 55
+		jal DrawHorizontalLine
+		
+		li $a0, 45
+		li $a1 15
+		lw $a2, corFundo
+		li $a3, 55
+		jal DrawHorizontalLine
 
+		#Bloco Tetris
+		
+		lw $ra, 0($sp)
+		addi $sp, $sp, 4
 
 		jr $ra
 
 TelaPreta:
 		lw $t0, corFundo
-		li $t1, 16136 # O Numero de pixels do Display
+		li $t1, 16384 # O Numero de pixels do Display
 	StartCLoop:
 		subi $t1, $t1, 4
 		addu $t2, $t1, $gp
@@ -753,13 +820,175 @@ ZeraBotoes:
 		sw $zero, 0xFFFF0000		# clear the button pushed bit
 		jr $ra
 
-DesenhaPeca:
+
+# $a0 the x coordinate
+# $a1 the y coordinate
+# $a2 the color
+# $a0 contains x position, $a1 contains y position, $a2 contains the color
+
+#Copia PieceArray para a Memória da Tela
+CopiaMemoria:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	
+	la $t0, PieceArray
+	addi $t0, $t0, 80 #Pula os 20 primeiros espaços do Array, pois as duas primeiras linhas não aparecem na tela
+	li $t2, 0
+	CopyILoop:
+		li $t1, 0
+		CopyJLoop:
+			move $a0, $t1
+			move $a1, $t2
+			lw $a2, 0($t0)	
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			addi $sp, $sp, -4
+			sw $t2, 0($sp)
+			#jal DesenhaBloco
+			lw $t2, 0($sp)
+			addi $sp, $sp, 4
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			addi $t1, $t1, 1
+			addi $t0, $t0, 4
+			bne $t1, 10, CopyJLoop
+		addi $t2, $t2, 1
+		bne $t2, 20, CopyILoop
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
 	
 
 	# $a0 the x starting coordinate
 	# $a1 the y coordinate
 	# $a2 the color
+DesenhaBloco:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	#Transforma Coordenada x relativa do Grid em Absoluta da tela
+	#AbsX = 2 + (RelX * 3)
+	li $t0, 3
+	mul $a0, $a0, $t0
+	addi $a0, $a0, 2
+	
+	#Transforma Coordenada 5 relativa do Grid em Absoluta da tela
+	#AbsY = 2 + (RelY * 3)
+	li $t0, 3
+	mul $a1, $a1, $t0
+	addi $a1, $a1, 2
+	
+	#Desenha o Bloco 3x3
+	li $t0, 0
+	move $t4, $a0
+	move $t5, $a1
+	BlockDrawILoop:
+		li $t1, 0
+		BlockDrawJLoop:
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			add $a0, $t4, $t0
+			add $a1, $t5, $t1
+			jal DrawPoint
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			addi $t1, $t1, 1
+			bne $t1, 3, BlockDrawJLoop
+		addi $t0, $t0, 1
+		bne $t0, 3, BlockDrawILoop
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+	# $a0 the x starting coordinate
+	# $a1 the y coordinate
+	# $a2 the color
 	# $a3 the x ending coordinate
+
+#Desenha a Proxima Peca no espaco indicado copiando da memoria SpawnArray
+#Coordenada X Base : 45
+#Coordenada Y Base : 10
+CopiaMemoriaProximaPeca:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t0, SpawnArray
+	
+	li $t2, 0
+	SpawnILoop:
+		li $t1, 0
+		SpawnJLoop:
+			#RelX = 45 + (t1 * 3)
+			#RelY = 10 + (t2 * 3)
+			mul $t3, $t1, 3
+			add $t3, $t3, 45
+			mul $t4, $t2, 3
+			add $t4, $t4, 10
+			lw $t5, 0($t0)
+			addi $t0, $t0, 4
+			
+		
+			
+			li $t6, 0
+			InsideSpawnILoop:
+				addi $sp, $sp, -4
+				sw $t0, 0($sp)
+				addi $sp, $sp, -4
+				sw $t1, 0($sp)
+				addi $sp, $sp, -4
+				sw $t2, 0($sp)
+				addi $sp, $sp, -4
+				sw $t3, 0($sp)
+				addi $sp, $sp, -4
+				sw $t4, 0($sp)
+				addi $sp, $sp, -4
+				sw $t5, 0($sp)
+				addi $sp, $sp, -4
+				sw $t6, 0($sp)
+				
+				move $a0, $t3
+				add $a1, $t4, $t6
+				move $a2, $t5
+				addi $a3, $a0, 3
+				jal DrawHorizontalLine
+				
+				lw $t6, 0($sp)
+				addi $sp, $sp, 4
+				lw $t5, 0($sp)
+				addi $sp, $sp, 4
+				lw $t4, 0($sp)
+				addi $sp, $sp, 4
+				lw $t3, 0($sp)
+				addi $sp, $sp, 4
+				lw $t2, 0($sp)
+				addi $sp, $sp, 4
+				lw $t1, 0($sp)
+				addi $sp, $sp, 4
+				lw $t0, 0($sp)
+				addi $sp, $sp, 4
+				
+				addi $t6, $t6, 1
+				bne $t6, 3, InsideSpawnILoop
+				
+			addi $t1, $t1, 1
+			bne $t1, 4, SpawnJLoop
+		addi $t2, $t2, 1
+		bne $t2, 2, SpawnILoop
+	
+	
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
 
 DrawHorizontalLine:
 
@@ -774,7 +1003,7 @@ DrawHorizontalLine:
 		add $a0, $t1, $t9
 		jal DrawPoint
 		addi $t9, $t9, -1
-
+		
 		bge $t9, 0, HorizontalLoop
 
 		lw $ra, 0($sp)		# put return back
