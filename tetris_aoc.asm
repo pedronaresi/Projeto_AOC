@@ -587,14 +587,19 @@ NewGame:
 		jal TelaJogo
 		
 		#Testando funções, as chamadas abaixas serão retiradas
-		jal CopiaMemoria
 		lw $t0, corblocoZ
 		la $t1, SpawnArray
+		sw $t0, 0($t1)
+		sw $t0, 4($t1)
+		sw $t0, 8($t1)
+		sw $t0, 12($t1)
 		sw $t0, 16($t1)
 		sw $t0, 20($t1)
 		sw $t0, 24($t1)
 		sw $t0, 28($t1)
 		jal CopiaMemoriaProximaPeca
+		jal Spawn
+		jal CopiaMemoria
 		#Fim de Testes
 		
 		lw $ra, 0($sp)
@@ -643,6 +648,42 @@ TelaJogo:
 
 
 		#Margem Lateral Direita
+		li $a0, 32
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		li $a0, 33
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		li $a0, 34
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		li $a0, 35
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		li $a0, 36
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		li $a0, 37
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		li $a0, 38
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		li $a0, 39
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
+		li $a0, 40
+		li $a1, 0
+		li $a3, 63
+		jal DrawVerticalLine
 		li $a0, 41
 		li $a1, 0
 		li $a3, 63
@@ -821,10 +862,33 @@ ZeraBotoes:
 		jr $ra
 
 
-# $a0 the x coordinate
-# $a1 the y coordinate
-# $a2 the color
-# $a0 contains x position, $a1 contains y position, $a2 contains the color
+
+#Spawna a nova peça
+Spawn:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t0, PieceArray
+	addi $t0, $t0, 12
+	la $t1, SpawnArray
+	
+	li $t2, 0
+	SpawnPieceILoop:
+		li $t3, 0
+		SpawnPieceJLoop:
+			lw $a0, 0($t1)
+			addi $t1, $t1, 4
+			sw $a0, 0($t0)
+			addi $t0, $t0, 4
+			addi $t3, $t3, 1
+			bne $t3, 4, SpawnPieceJLoop
+		
+		addi $t2, $t2, 1
+		addi $t0, $t0, 24
+		bne $t2, 2, SpawnPieceILoop
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+		
 
 #Copia PieceArray para a Memória da Tela
 CopiaMemoria:
@@ -847,7 +911,7 @@ CopiaMemoria:
 			sw $t1, 0($sp)
 			addi $sp, $sp, -4
 			sw $t2, 0($sp)
-			#jal DesenhaBloco
+			jal DesenhaBloco
 			lw $t2, 0($sp)
 			addi $sp, $sp, 4
 			lw $t1, 0($sp)
@@ -1052,3 +1116,4 @@ DrawPoint:
 # $a1 the y coordinate
 # $a2 the color
 # $a3 the x ending coordinate
+
