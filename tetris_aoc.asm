@@ -1434,7 +1434,7 @@ AtualizaScore:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
 
-	add: $t0, $s0, 1
+	add $t0, $s0, 1
 
 	add Score, $t0, Score
 
@@ -1446,13 +1446,15 @@ PegaDigito1:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
 
+	sw $zero, AuxModulus
+	sw $zero, AuxModulus2
 	li $t5, 1
 
 	add $t0, $s0, 10
 	add $t1, $s0, 1
 		for:
 
-			beq $t1, $zero, SaiFora			#while(n>=1)
+			beq $t1, $zero, result			#while(n>=1)
 
 			mul $t2, $t2, $t0				#x=*x
 			sub $t1, $t1, $t5				#n--
@@ -1461,12 +1463,16 @@ PegaDigito1:
 
 			result:
 				div $t3, Score, $t2
-				addi AuxModulus, $zero, $t3
+
+				addi $t6, $t3, 0
+				sw $t6, AuxModulus
+				#addi AuxModuluz, $zero, $t3
 					CalculaMod:
 						addi $sp, $sp, -4
 						sw $ra, 0($sp)
 
-						addi $t0, $zero, AuxModulus
+						lw $t6, AuxModulus
+						addi $t0, $zero, $t6
 						addi $t1, $zero, 10
 						addi $t2, $zero, 0
 						addi $t3, $zero, 2
@@ -1482,7 +1488,7 @@ PegaDigito1:
 							j L1               # repeat the while loop
 
 							L2:
-								addi AuxModulus2, $zero, $t2
+								sw $t2, AuxModulus2
 
 
 							lw $ra, 0($sp)
@@ -1498,6 +1504,8 @@ PegaDigito2:
 	sw $ra, 0($sp)
 
 	li $t5, 1
+	sw $zero, AuxModulus
+	sw $zero, AuxModulus2
 
 	add $t0, $s0, 10
 	add $t1, $s0, 2
@@ -1512,43 +1520,48 @@ PegaDigito2:
 
 		result:
 			div $t3, Score, $t2
-				addi AuxModulus, $zero, $t3
-			CalculaMod:
-				addi $sp, $sp, -4
-				sw $ra, 0($sp)
+			addi $t6, $t3, 0
+			sw $t6, AuxModulus
+			#addi AuxModuluz, $zero, $t3
+				CalculaMod:
+					addi $sp, $sp, -4
+					sw $ra, 0($sp)
 
-				addi $t0, $zero, AuxModulus
-				addi $t1, $zero, 10
-				addi $t2, $zero, 0
-				addi $t3, $zero, 2
+					lw $t6, AuxModulus
+					addi $t0, $zero, $t6
+					addi $t1, $zero, 10
+					addi $t2, $zero, 0
+					addi $t3, $zero, 2
 
 					L1:
 						beq $t0, $t1, L2    # while i < 9, compute
-		        div $t0, $t3        # i mod 2
-		        mfhi $t6           # temp for the mod
-		        beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
-		        add $t2, $t2, $t0   # k = k + i
+						div $t0, $t3        # i mod 2
+						mfhi $t6           # temp for the mod
+						beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
+						add $t2, $t2, $t0   # k = k + i
 					Lmod:
-		   			add $t0, $t0, 1     # i++
-	        	j L1               # repeat the while loop
+						add $t0, $t0, 1     # i++
+						j L1               # repeat the while loop
 
-					L2:
-						addi AuxModulus2, $zero, $t2
+						L2:
+							sw $t2, AuxModulus2
 
 
-				lw $ra, 0($sp)
-				addi $sp, $sp, 4
-				jr $ra
+						lw $ra, 0($sp)
+						addi $sp, $sp, 4
+						jr $ra
 
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	jr $ra
-	
+			lw $ra, 0($sp)
+			addi $sp, $sp, 4
+			jr $ra
+
 PegaDigito3:
 		addi $sp, $sp, -4
 		sw $ra, 0($sp)
 
 		li $t5, 1
+		sw $zero, AuxModulus
+		sw $zero, AuxModulus2
 
 		add $t0, $s0, 10
 		add $t1, $s0, 3
@@ -1563,33 +1576,36 @@ PegaDigito3:
 
 			result:
 				div $t3, Score, $t2
-					addi AuxModulus, $zero, $t3
-				CalculaMod:
-					addi $sp, $sp, -4
-					sw $ra, 0($sp)
+				addi $t6, $t3, 0
+				sw $t6, AuxModulus
+				#addi AuxModuluz, $zero, $t3
+					CalculaMod:
+						addi $sp, $sp, -4
+						sw $ra, 0($sp)
 
-					addi $t0, $zero, AuxModulus
-					addi $t1, $zero, 10
-					addi $t2, $zero, 0
-					addi $t3, $zero, 2
+						lw $t6, AuxModulus
+						addi $t0, $zero, $t6
+						addi $t1, $zero, 10
+						addi $t2, $zero, 0
+						addi $t3, $zero, 2
 
 						L1:
 							beq $t0, $t1, L2    # while i < 9, compute
-			        div $t0, $t3        # i mod 2
-			        mfhi $t6           # temp for the mod
-			        beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
-			        add $t2, $t2, $t0   # k = k + i
+							div $t0, $t3        # i mod 2
+							mfhi $t6           # temp for the mod
+							beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
+							add $t2, $t2, $t0   # k = k + i
 						Lmod:
-			   			add $t0, $t0, 1     # i++
-		        	j L1               # repeat the while loop
+							add $t0, $t0, 1     # i++
+							j L1               # repeat the while loop
 
-						L2:
-							addi AuxModulus2, $zero, $t2
+							L2:
+								sw $t2, AuxModulus2
 
 
-					lw $ra, 0($sp)
-					addi $sp, $sp, 4
-					jr $ra
+							lw $ra, 0($sp)
+							addi $sp, $sp, 4
+							jr $ra
 
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
