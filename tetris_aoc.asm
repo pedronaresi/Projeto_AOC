@@ -36,7 +36,14 @@
 	IDblocoT: 		.word 5				#ID para gerar o bloco I
 	IDblocoZ: 		.word 6				#ID para gerar o bloco I
 	PieceArray:		.word 0:220			#Cria Matriz de Peças de 220 espaços com todos já inicializados com 0
+	FixedArray:		.word 0:220			#Cria Matriz de Peças já fixadas. Mesmo tamanho de PieceArray
 	SpawnArray:		.word 0:8			#Matriz de Próxima Peça 
+	RandomBag:		.word -1:7			#Bag de Spawn
+	BagLength:		.word 0				#Tamanho da Bag
+	CurrentPiece:		.word 0				#ID da Peça Atual
+	NextPiece:		.word 0				#ID da Próxima Peça
+	XRotation:		.word 0				#Coordenada X do Centro de Rotação da peça Atual
+	YRotation:		.word 0				#Coordenada Y do Centro de Rotação da peça Atual
 .text
 
 .globl main
@@ -44,13 +51,35 @@
 
 main:
 	jal NewGame
-	
+	jal GameLoop
 	li $v0, 10
 	syscall
 
-######################################################
-# Deixa a tela preta
-######################################################
+
+###########################################################
+# 		Funções de Lógica de Game 		  #
+###########################################################
+#			Controles			  #
+# 1 - Mover para Esquerda			  	  #
+# 2 - Mover para Direita			  	  #
+# 3 - Rotacionar Peça   			  	  #
+# 4 - Drop					  	  #
+# 5 - Restart Game				  	  #
+###########################################################
+
+GameLoop:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+
+##########################################################
+# Funções Gráficas e Auxiliares				 #
+##########################################################
 
 NewGame:
 	addi $sp, $sp, -4
@@ -585,28 +614,210 @@ NewGame:
 		jal ZeraBotoes
 		jal TelaPreta
 		jal TelaJogo
-		
-		#Testando funções, as chamadas abaixas serão retiradas
-		lw $t0, corblocoZ
-		la $t1, SpawnArray
-		sw $t0, 0($t1)
-		sw $t0, 4($t1)
-		sw $t0, 8($t1)
-		sw $t0, 12($t1)
-		sw $t0, 16($t1)
-		sw $t0, 20($t1)
-		sw $t0, 24($t1)
-		sw $t0, 28($t1)
-		jal CopiaMemoriaProximaPeca
+		jal RandomColor
+		addi $sp, $sp, -4
+		sw $a0, 0($sp)
+		jal GetElementFromBag
+		sw $a0, CurrentPiece
+		lw $a1, 0($sp)
+		addi $sp, $sp, 4
+		jal SelectNewSpawnPiece
+		lw $a0, CurrentPiece
+		jal InitialRotationPos
+		sw $a0, XRotation
+		sw $a1, YRotation
+		#jal CopiaMemoriaProximaPeca
 		jal Spawn
 		jal CopiaMemoria
-		#Fim de Testes
-		
+		jal RandomColor
+		addi $sp, $sp, -4
+		sw $a0, 0($sp)
+		jal GetElementFromBag
+		sw $a0, NextPiece
+		lw $a1, 0($sp)
+		addi $sp, $sp, 4
+		jal SelectNewSpawnPiece
+		jal CopiaMemoriaProximaPeca	
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
 		jr $ra
 	
 
+#Passado em $a0 o ID da peça devolve As coordenadas X e Y de centro de rotação inicial da peça
+#$a0: Coordenada X
+#$a1: Coordenada Y
+InitialRotationPos:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	beq $a0, 0, SwitchRotate0
+	beq $a0, 1, SwitchRotate1
+	beq $a0, 2, SwitchRotate2
+	beq $a0, 3, SwitchRotate3
+	beq $a0, 4, SwitchRotate4
+	beq $a0, 5, SwitchRotate5
+	beq $a0, 6, SwitchRotate6
+	
+	SwitchRotate0:
+		li $a0, -1
+		li $a1, -1
+		j ExitSwitchRotate
+	SwitchRotate1:
+		li $a0, 5
+		li $a1, 0
+		j ExitSwitchRotate
+	SwitchRotate2:
+		li $a0, 4
+		li $a1, 0
+		j ExitSwitchRotate
+	SwitchRotate3:
+		li $a0, 4
+		li $a1, 0
+		j ExitSwitchRotate
+	SwitchRotate4:
+		li $a0, 4
+		li $a1, 0
+		j ExitSwitchRotate	
+	SwitchRotate5:
+		li $a0, 4
+		li $a1, 0
+		j ExitSwitchRotate	
+	SwitchRotate6:
+		li $a0, 4
+		li $a1, 0
+		j ExitSwitchRotate		
+	ExitSwitchRotate:
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+#Devolve uma cor Aleatória em $a0
+RandomColor:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	li $v0, 42
+	li $a0, 498465463
+	li $a1, 7
+	syscall
+	beq $a0, 0, CaseColor0
+	beq $a0, 1, CaseColor1
+	beq $a0, 2, CaseColor2
+	beq $a0, 3, CaseColor3
+	beq $a0, 4, CaseColor4
+	beq $a0, 5, CaseColor5
+	beq $a0, 6, CaseColor6
+	
+	CaseColor0:
+		lw $a0, corblocoI
+		j ExitSwitchColor
+	CaseColor1:
+		lw $a0, corblocoJ
+		j ExitSwitchColor
+	CaseColor2:
+		lw $a0, corblocoL
+		j ExitSwitchColor
+	CaseColor3:
+		lw $a0, corblocoO
+		j ExitSwitchColor
+	CaseColor4:
+		lw $a0, corblocoS
+		j ExitSwitchColor
+	CaseColor5:
+		lw $a0, corblocoT
+		j ExitSwitchColor
+	CaseColor6:
+		lw $a0, corblocoZ
+		j ExitSwitchColor
+	
+	
+	ExitSwitchColor:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+#Decodifica peça passada em $a0 para a memória de Spawn e $a1 sendo a cor da peça
+SelectNewSpawnPiece:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	jal SpawnClear
+	la $t0, SpawnArray
+	beq $a0, 0, Piece0
+	beq $a0, 1, Piece1
+	beq $a0, 2, Piece2
+	beq $a0, 3, Piece3
+	beq $a0, 4, Piece4
+	beq $a0, 5, Piece5
+	beq $a0, 6, Piece6
+
+	
+	Piece0: #Peça O
+		sw $a1, 4($t0)
+		sw $a1, 8($t0)
+		sw $a1, 20($t0)
+		sw $a1, 24($t0)
+		j ExitSwitch
+	Piece1: #Peça I
+		sw $a1, 0($t0)
+		sw $a1, 4($t0)
+		sw $a1, 8($t0)
+		sw $a1, 12($t0)
+		j ExitSwitch
+	Piece2: #Peça T
+		sw $a1, 0($t0)
+		sw $a1, 4($t0)
+		sw $a1, 8($t0)
+		sw $a1, 20($t0)
+		j ExitSwitch
+	Piece3: #Peça L
+		sw $a1, 0($t0)
+		sw $a1, 4($t0)
+		sw $a1, 8($t0)
+		sw $a1, 16($t0)
+		j ExitSwitch
+	Piece4: #Peça J
+		sw $a1, 0($t0)
+		sw $a1, 4($t0)
+		sw $a1, 8($t0)
+		sw $a1, 24($t0)
+		j ExitSwitch
+	Piece5: #Peça S
+		sw $a1, 4($t0)
+		sw $a1, 8($t0)
+		sw $a1, 16($t0)
+		sw $a1, 20($t0)
+		j ExitSwitch
+	Piece6: #Peça Z
+		sw $a1, 0($t0)
+		sw $a1, 4($t0)
+		sw $a1, 20($t0)
+		sw $a1, 24($t0)
+		j ExitSwitch
+	ExitSwitch:
+	
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+SpawnClear:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t0, SpawnArray
+	lw $t1, corFundo
+	sw, $t1, 0($t0)
+	sw, $t1, 4($t0)
+	sw, $t1, 8($t0)
+	sw, $t1, 12($t0)
+	sw, $t1, 16($t0)
+	sw, $t1, 20($t0)
+	sw, $t1, 24($t0)
+	sw, $t1, 28($t0)
+	
+	addi $sp, $sp, 4
+	jr $ra
 
 TelaJogo:
 		addi $sp, $sp, -4
@@ -837,6 +1048,7 @@ TelaJogo:
 		lw $a2, corFundo
 		li $a3, 55
 		jal DrawHorizontalLine
+		
 
 		#Bloco Tetris
 		
@@ -863,11 +1075,70 @@ ZeraBotoes:
 
 
 
+#Retorna uma peca aleatória da Bag
+#Retorno da Peça está no $a0
+GetElementFromBag:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	lw $t0, BagLength
+	bnez $t0, PickElement
+	jal CreateNewBag
+	PickElement:
+	lw $t1, BagLength
+	la $t2, RandomBag
+	addi $t1, $t1, -1
+	sw $t1, BagLength
+	mul $t1, $t1, 4
+	add $t2, $t2, $t1
+	lw $a0, 0($t2)
+	li $t0, -1
+	sw $t0, 0($t2)
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+#Cria uma nova Bag caso ela esteja vazia
+CreateNewBag:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	li $t0, 0
+	
+	NewBagILoop:
+		li $v0, 42
+		li $a0, 485498564
+		li $a1, 7
+		syscall	
+		la $t2, RandomBag
+		mul $a0, $a0, 4
+		add $t3, $t2, $a0
+		lw $t4, 0($t3)
+		bne $t4, -1, NewBagJLoop
+		sw $t0, 0($t3)
+		j AlreadyInserted
+			NewBagJLoop:
+				lw $t3, 0($t2)
+				bne $t3, -1, EmptySpaceNotFound
+				sw  $t0, 0($t2)
+				j AlreadyInserted
+				EmptySpaceNotFound:
+				addi $t2, $t2, 4
+				j NewBagJLoop
+		AlreadyInserted:
+		addi $t0, $t0, 1
+		bne $t0, 7, NewBagILoop
+	li $t1, 7
+	sw $t1, BagLength
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
 #Spawna a nova peça
 Spawn:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
 	la $t0, PieceArray
+	#addi $t0, $t0, 80 #Comando de Teste para spawnar no espaço visível. Não utilizado no Jogo final
 	addi $t0, $t0, 12
 	la $t1, SpawnArray
 	
@@ -894,8 +1165,7 @@ Spawn:
 CopiaMemoria:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-	
-	
+
 	la $t0, PieceArray
 	addi $t0, $t0, 80 #Pula os 20 primeiros espaços do Array, pois as duas primeiras linhas não aparecem na tela
 	li $t2, 0
@@ -928,7 +1198,46 @@ CopiaMemoria:
 	jr $ra
 	
 	
+CopiaMemoriaFixa:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
 
+	la $t0, FixedArray
+	addi $t0, $t0, 80 #Pula os 20 primeiros espaços do Array, pois as duas primeiras linhas não aparecem na tela
+	li $t2, 0
+	FixCopyILoop:
+		li $t1, 0
+		FixCopyJLoop:
+			move $a0, $t1
+			move $a1, $t2
+			lw $a2, 0($t0)
+			beqz $a2, BlackBlockNotDrawn #Não Desenha Bloco vazio (Preto), pois isso é função do CopiaMemoria
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			addi $sp, $sp, -4
+			sw $t2, 0($sp)
+			jal DesenhaBloco
+			lw $t2, 0($sp)
+			addi $sp, $sp, 4
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			BlackBlockNotDrawn:
+			addi $t1, $t1, 1
+			addi $t0, $t0, 4
+			bne $t1, 10, FixCopyJLoop
+		addi $t2, $t2, 1
+		bne $t2, 20, FixCopyILoop
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+	
+	
+	
 	# $a0 the x starting coordinate
 	# $a1 the y coordinate
 	# $a2 the color
@@ -1116,4 +1425,5 @@ DrawPoint:
 # $a1 the y coordinate
 # $a2 the color
 # $a3 the x ending coordinate
+
 
