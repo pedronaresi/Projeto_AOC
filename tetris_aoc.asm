@@ -1053,6 +1053,45 @@ TelaJogo:
 		li $a3, 55
 		jal DrawHorizontalLine
 
+		#Desenhando Espaço de Score
+		#X Absoluto Base: 45
+		#Y Abosuluto Base: 10
+		li $a0, 45
+		li $a1 40
+		lw $a2, corFundo
+		li $a3, 57
+		jal DrawHorizontalLine
+
+		li $a0, 45
+		li $a1 41
+		lw $a2, corFundo
+		li $a3, 57
+		jal DrawHorizontalLine
+
+		li $a0, 45
+		li $a1 42
+		lw $a2, corFundo
+		li $a3, 57
+		jal DrawHorizontalLine
+
+		li $a0, 45
+		li $a1 43
+		lw $a2, corFundo
+		li $a3, 57
+		jal DrawHorizontalLine
+
+		li $a0, 45
+		li $a1 44
+		lw $a2, corFundo
+		li $a3, 57
+		jal DrawHorizontalLine
+
+		li $a0, 45
+		li $a1 45
+		lw $a2, corFundo
+		li $a3, 57
+		jal DrawHorizontalLine
+
 
 		#Bloco Tetris
 
@@ -1435,8 +1474,10 @@ AtualizaScore:
 	sw $ra, 0($sp)
 
 	add $t0, $s0, 1
+	
+	lw $t2, Score
 
-	add Score, $t0, Score
+	add $t2, $t0, $t2
 
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
@@ -1462,7 +1503,8 @@ PegaDigito1:
 			j for
 
 			result:
-				div $t3, Score, $t2
+				lw $t7, Score
+				div $t3, $t7, $t2
 
 				addi $t6, $t3, 0
 				sw $t6, AuxModulus
@@ -1472,7 +1514,7 @@ PegaDigito1:
 						sw $ra, 0($sp)
 
 						lw $t6, AuxModulus
-						addi $t0, $zero, $t6
+						addi $t0, $t6, 0
 						addi $t1, $zero, 10
 						addi $t2, $zero, 0
 						addi $t3, $zero, 2
@@ -1509,41 +1551,43 @@ PegaDigito2:
 
 	add $t0, $s0, 10
 	add $t1, $s0, 2
-		for:
+		for1:
 
-			beq $t1, $zero, SaiFora			#while(n>=1)
+			beq $t1, $zero, result1			#while(n>=1)
 
 			mul $t2, $t2, $t0				#x=*x
 			sub $t1, $t1, $t5				#n--
 
-			j for
+			j for1
 
-		result:
-			div $t3, Score, $t2
+		result1:
+			lw $t7, Score
+			div $t3, $t7, $t2
+
 			addi $t6, $t3, 0
 			sw $t6, AuxModulus
 			#addi AuxModuluz, $zero, $t3
-				CalculaMod:
+				CalculaMod1:
 					addi $sp, $sp, -4
 					sw $ra, 0($sp)
 
 					lw $t6, AuxModulus
-					addi $t0, $zero, $t6
+					addi $t0, $t6, 0
 					addi $t1, $zero, 10
 					addi $t2, $zero, 0
 					addi $t3, $zero, 2
 
-					L1:
+					L11:
 						beq $t0, $t1, L2    # while i < 9, compute
 						div $t0, $t3        # i mod 2
 						mfhi $t6           # temp for the mod
 						beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
 						add $t2, $t2, $t0   # k = k + i
-					Lmod:
+					Lmod1:
 						add $t0, $t0, 1     # i++
 						j L1               # repeat the while loop
 
-						L2:
+						L21:
 							sw $t2, AuxModulus2
 
 
@@ -1565,41 +1609,42 @@ PegaDigito3:
 
 		add $t0, $s0, 10
 		add $t1, $s0, 3
-			for:
+			for2:
 
-				beq $t1, $zero, SaiFora			#while(n>=1)
+				beq $t1, $zero, result2			#while(n>=1)
 
 				mul $t2, $t2, $t0				#x=*x
 				sub $t1, $t1, $t5				#n--
 
-				j for
+				j for2
 
-			result:
-				div $t3, Score, $t2
+			result2:
+				lw $t7, Score
+				div $t3, $t7, $t2
 				addi $t6, $t3, 0
 				sw $t6, AuxModulus
 				#addi AuxModuluz, $zero, $t3
-					CalculaMod:
+					CalculaMod2:
 						addi $sp, $sp, -4
 						sw $ra, 0($sp)
 
 						lw $t6, AuxModulus
-						addi $t0, $zero, $t6
+						addi $t0, $t6, 0
 						addi $t1, $zero, 10
 						addi $t2, $zero, 0
 						addi $t3, $zero, 2
 
-						L1:
+						L12:
 							beq $t0, $t1, L2    # while i < 9, compute
 							div $t0, $t3        # i mod 2
 							mfhi $t6           # temp for the mod
 							beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
 							add $t2, $t2, $t0   # k = k + i
-						Lmod:
+						Lmod2:
 							add $t0, $t0, 1     # i++
 							j L1               # repeat the while loop
 
-							L2:
+							L22:
 								sw $t2, AuxModulus2
 
 
@@ -1610,3 +1655,48 @@ PegaDigito3:
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
 		jr $ra
+VerificaDigito1:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	lw $t0, AuxModulus
+	
+	
+	
+	addi $sp, $sp, 4
+	jr $ra
+
+VerificaDigito2:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	lw $t0, AuxModulus
+	
+	addi $sp, $sp, 4
+	jr $ra
+	
+VerificaDigito3:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	lw $t0, AuxModulus
+	li $a0, 45
+	li $a1 42
+	lw $a2, corFundo
+	li $a3, 57
+	
+	addi $sp, $sp, 4
+	jr $ra
+Desenha0:
+	jal DrawVerticalLine
+	
+Desenha1:
+Desenha2:
+Desenha3:
+Desenha4:
+Desenha5:
+Desenha6:
+Desenha7:
+Desenha8:
+Desenha9:
+
