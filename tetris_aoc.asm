@@ -37,13 +37,17 @@
 	IDblocoZ: 		.word 6				#ID para gerar o bloco I
 	PieceArray:		.word 0:220			#Cria Matriz de Peças de 220 espaços com todos já inicializados com 0
 	FixedArray:		.word 0:220			#Cria Matriz de Peças já fixadas. Mesmo tamanho de PieceArray
-	SpawnArray:		.word 0:8			#Matriz de Próxima Peça 
+	SpawnArray:		.word 0:8			#Matriz de Próxima Peça
 	RandomBag:		.word -1:7			#Bag de Spawn
 	BagLength:		.word 0				#Tamanho da Bag
 	CurrentPiece:		.word 0				#ID da Peça Atual
 	NextPiece:		.word 0				#ID da Próxima Peça
 	XRotation:		.word 0				#Coordenada X do Centro de Rotação da peça Atual
 	YRotation:		.word 0				#Coordenada Y do Centro de Rotação da peça Atual
+	Score:				.word 0				#Armazena a pontuacao
+	ResetNumber:	.word 0				#Armazena o numero de resets no player(toda vez que a pontuacao chegar a 999 ele reseta)
+	AuxModulus:		.word 0				#Data auxiliar para calcular modulo
+	AuxModulus2:	.word 0				#Data auxiliar para calcular modulo
 .text
 
 .globl main
@@ -70,12 +74,12 @@ main:
 GameLoop:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-	
-	
+
+
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
-	
+
 
 ##########################################################
 # Funções Gráficas e Auxiliares				 #
@@ -637,11 +641,11 @@ NewGame:
 		lw $a1, 0($sp)
 		addi $sp, $sp, 4
 		jal SelectNewSpawnPiece
-		jal CopiaMemoriaProximaPeca	
+		jal CopiaMemoriaProximaPeca
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
 		jr $ra
-	
+
 
 #Passado em $a0 o ID da peça devolve As coordenadas X e Y de centro de rotação inicial da peça
 #$a0: Coordenada X
@@ -649,7 +653,7 @@ NewGame:
 InitialRotationPos:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-	
+
 	beq $a0, 0, SwitchRotate0
 	beq $a0, 1, SwitchRotate1
 	beq $a0, 2, SwitchRotate2
@@ -657,7 +661,7 @@ InitialRotationPos:
 	beq $a0, 4, SwitchRotate4
 	beq $a0, 5, SwitchRotate5
 	beq $a0, 6, SwitchRotate6
-	
+
 	SwitchRotate0:
 		li $a0, -1
 		li $a1, -1
@@ -677,17 +681,17 @@ InitialRotationPos:
 	SwitchRotate4:
 		li $a0, 4
 		li $a1, 0
-		j ExitSwitchRotate	
+		j ExitSwitchRotate
 	SwitchRotate5:
 		li $a0, 4
 		li $a1, 0
-		j ExitSwitchRotate	
+		j ExitSwitchRotate
 	SwitchRotate6:
 		li $a0, 4
 		li $a1, 0
-		j ExitSwitchRotate		
+		j ExitSwitchRotate
 	ExitSwitchRotate:
-	
+
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
@@ -696,7 +700,7 @@ InitialRotationPos:
 RandomColor:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-	
+
 	li $v0, 42
 	li $a0, 498465463
 	li $a1, 7
@@ -708,7 +712,7 @@ RandomColor:
 	beq $a0, 4, CaseColor4
 	beq $a0, 5, CaseColor5
 	beq $a0, 6, CaseColor6
-	
+
 	CaseColor0:
 		lw $a0, corblocoI
 		j ExitSwitchColor
@@ -730,18 +734,18 @@ RandomColor:
 	CaseColor6:
 		lw $a0, corblocoZ
 		j ExitSwitchColor
-	
-	
+
+
 	ExitSwitchColor:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
-	
+
 #Decodifica peça passada em $a0 para a memória de Spawn e $a1 sendo a cor da peça
 SelectNewSpawnPiece:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-	
+
 	jal SpawnClear
 	la $t0, SpawnArray
 	beq $a0, 0, Piece0
@@ -752,7 +756,7 @@ SelectNewSpawnPiece:
 	beq $a0, 5, Piece5
 	beq $a0, 6, Piece6
 
-	
+
 	Piece0: #Peça O
 		sw $a1, 4($t0)
 		sw $a1, 8($t0)
@@ -796,8 +800,8 @@ SelectNewSpawnPiece:
 		sw $a1, 24($t0)
 		j ExitSwitch
 	ExitSwitch:
-	
-	
+
+
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
@@ -815,7 +819,7 @@ SpawnClear:
 	sw, $t1, 20($t0)
 	sw, $t1, 24($t0)
 	sw, $t1, 28($t0)
-	
+
 	addi $sp, $sp, 4
 	jr $ra
 
@@ -1018,40 +1022,40 @@ TelaJogo:
 		lw $a2, corFundo
 		li $a3, 55
 		jal DrawHorizontalLine
-		
+
 		li $a0, 45
 		li $a1 11
 		lw $a2, corFundo
 		li $a3, 55
 		jal DrawHorizontalLine
-		
+
 		li $a0, 45
 		li $a1 12
 		lw $a2, corFundo
 		li $a3, 55
 		jal DrawHorizontalLine
-		
+
 		li $a0, 45
 		li $a1 13
 		lw $a2, corFundo
 		li $a3, 55
 		jal DrawHorizontalLine
-		
+
 		li $a0, 45
 		li $a1 14
 		lw $a2, corFundo
 		li $a3, 55
 		jal DrawHorizontalLine
-		
+
 		li $a0, 45
 		li $a1 15
 		lw $a2, corFundo
 		li $a3, 55
 		jal DrawHorizontalLine
-		
+
 
 		#Bloco Tetris
-		
+
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
 
@@ -1093,22 +1097,22 @@ GetElementFromBag:
 	lw $a0, 0($t2)
 	li $t0, -1
 	sw $t0, 0($t2)
-	
+
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
-	
+
 #Cria uma nova Bag caso ela esteja vazia
 CreateNewBag:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
 	li $t0, 0
-	
+
 	NewBagILoop:
 		li $v0, 42
 		li $a0, 485498564
 		li $a1, 7
-		syscall	
+		syscall
 		la $t2, RandomBag
 		mul $a0, $a0, 4
 		add $t3, $t2, $a0
@@ -1141,7 +1145,7 @@ Spawn:
 	#addi $t0, $t0, 80 #Comando de Teste para spawnar no espaço visível. Não utilizado no Jogo final
 	addi $t0, $t0, 12
 	la $t1, SpawnArray
-	
+
 	li $t2, 0
 	SpawnPieceILoop:
 		li $t3, 0
@@ -1152,14 +1156,14 @@ Spawn:
 			addi $t0, $t0, 4
 			addi $t3, $t3, 1
 			bne $t3, 4, SpawnPieceJLoop
-		
+
 		addi $t2, $t2, 1
 		addi $t0, $t0, 24
 		bne $t2, 2, SpawnPieceILoop
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
-		
+
 
 #Copia PieceArray para a Memória da Tela
 CopiaMemoria:
@@ -1174,7 +1178,7 @@ CopiaMemoria:
 		CopyJLoop:
 			move $a0, $t1
 			move $a1, $t2
-			lw $a2, 0($t0)	
+			lw $a2, 0($t0)
 			addi $sp, $sp, -4
 			sw $t0, 0($sp)
 			addi $sp, $sp, -4
@@ -1196,8 +1200,8 @@ CopiaMemoria:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
-	
-	
+
+
 CopiaMemoriaFixa:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
@@ -1234,29 +1238,29 @@ CopiaMemoriaFixa:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
-	
-	
-	
-	
+
+
+
+
 	# $a0 the x starting coordinate
 	# $a1 the y coordinate
 	# $a2 the color
 DesenhaBloco:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-	
+
 	#Transforma Coordenada x relativa do Grid em Absoluta da tela
 	#AbsX = 2 + (RelX * 3)
 	li $t0, 3
 	mul $a0, $a0, $t0
 	addi $a0, $a0, 2
-	
+
 	#Transforma Coordenada 5 relativa do Grid em Absoluta da tela
 	#AbsY = 2 + (RelY * 3)
 	li $t0, 3
 	mul $a1, $a1, $t0
 	addi $a1, $a1, 2
-	
+
 	#Desenha o Bloco 3x3
 	li $t0, 0
 	move $t4, $a0
@@ -1295,7 +1299,7 @@ CopiaMemoriaProximaPeca:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
 	la $t0, SpawnArray
-	
+
 	li $t2, 0
 	SpawnILoop:
 		li $t1, 0
@@ -1308,9 +1312,9 @@ CopiaMemoriaProximaPeca:
 			add $t4, $t4, 10
 			lw $t5, 0($t0)
 			addi $t0, $t0, 4
-			
-		
-			
+
+
+
 			li $t6, 0
 			InsideSpawnILoop:
 				addi $sp, $sp, -4
@@ -1327,13 +1331,13 @@ CopiaMemoriaProximaPeca:
 				sw $t5, 0($sp)
 				addi $sp, $sp, -4
 				sw $t6, 0($sp)
-				
+
 				move $a0, $t3
 				add $a1, $t4, $t6
 				move $a2, $t5
 				addi $a3, $a0, 3
 				jal DrawHorizontalLine
-				
+
 				lw $t6, 0($sp)
 				addi $sp, $sp, 4
 				lw $t5, 0($sp)
@@ -1348,17 +1352,17 @@ CopiaMemoriaProximaPeca:
 				addi $sp, $sp, 4
 				lw $t0, 0($sp)
 				addi $sp, $sp, 4
-				
+
 				addi $t6, $t6, 1
 				bne $t6, 3, InsideSpawnILoop
-				
+
 			addi $t1, $t1, 1
 			bne $t1, 4, SpawnJLoop
 		addi $t2, $t2, 1
 		bne $t2, 2, SpawnILoop
-	
-	
-	
+
+
+
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
@@ -1376,7 +1380,7 @@ DrawHorizontalLine:
 		add $a0, $t1, $t9
 		jal DrawPoint
 		addi $t9, $t9, -1
-		
+
 		bge $t9, 0, HorizontalLoop
 
 		lw $ra, 0($sp)		# put return back
@@ -1426,4 +1430,167 @@ DrawPoint:
 # $a2 the color
 # $a3 the x ending coordinate
 
+AtualizaScore:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
 
+	add: $t0, $s0, 1
+
+	add Score, $t0, Score
+
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+PegaDigito1:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+
+	li $t5, 1
+
+	add $t0, $s0, 10
+	add $t1, $s0, 1
+		for:
+
+			beq $t1, $zero, SaiFora			#while(n>=1)
+
+			mul $t2, $t2, $t0				#x=*x
+			sub $t1, $t1, $t5				#n--
+
+			j for
+
+			result:
+				div $t3, Score, $t2
+				addi AuxModulus, $zero, $t3
+					CalculaMod:
+						addi $sp, $sp, -4
+						sw $ra, 0($sp)
+
+						addi $t0, $zero, AuxModulus
+						addi $t1, $zero, 10
+						addi $t2, $zero, 0
+						addi $t3, $zero, 2
+
+						L1:
+							beq $t0, $t1, L2    # while i < 9, compute
+							div $t0, $t3        # i mod 2
+							mfhi $t6           # temp for the mod
+							beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
+							add $t2, $t2, $t0   # k = k + i
+						Lmod:
+							add $t0, $t0, 1     # i++
+							j L1               # repeat the while loop
+
+							L2:
+								addi AuxModulus2, $zero, $t2
+
+
+							lw $ra, 0($sp)
+							addi $sp, $sp, 4
+							jr $ra
+
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+PegaDigito2:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+
+	li $t5, 1
+
+	add $t0, $s0, 10
+	add $t1, $s0, 2
+		for:
+
+			beq $t1, $zero, SaiFora			#while(n>=1)
+
+			mul $t2, $t2, $t0				#x=*x
+			sub $t1, $t1, $t5				#n--
+
+			j for
+
+		result:
+			div $t3, Score, $t2
+				addi AuxModulus, $zero, $t3
+			CalculaMod:
+				addi $sp, $sp, -4
+				sw $ra, 0($sp)
+
+				addi $t0, $zero, AuxModulus
+				addi $t1, $zero, 10
+				addi $t2, $zero, 0
+				addi $t3, $zero, 2
+
+					L1:
+						beq $t0, $t1, L2    # while i < 9, compute
+		        div $t0, $t3        # i mod 2
+		        mfhi $t6           # temp for the mod
+		        beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
+		        add $t2, $t2, $t0   # k = k + i
+					Lmod:
+		   			add $t0, $t0, 1     # i++
+	        	j L1               # repeat the while loop
+
+					L2:
+						addi AuxModulus2, $zero, $t2
+
+
+				lw $ra, 0($sp)
+				addi $sp, $sp, 4
+				jr $ra
+
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+PegaDigito3:
+		addi $sp, $sp, -4
+		sw $ra, 0($sp)
+
+		li $t5, 1
+
+		add $t0, $s0, 10
+		add $t1, $s0, 3
+			for:
+
+				beq $t1, $zero, SaiFora			#while(n>=1)
+
+				mul $t2, $t2, $t0				#x=*x
+				sub $t1, $t1, $t5				#n--
+
+				j for
+
+			result:
+				div $t3, Score, $t2
+					addi AuxModulus, $zero, $t3
+				CalculaMod:
+					addi $sp, $sp, -4
+					sw $ra, 0($sp)
+
+					addi $t0, $zero, AuxModulus
+					addi $t1, $zero, 10
+					addi $t2, $zero, 0
+					addi $t3, $zero, 2
+
+						L1:
+							beq $t0, $t1, L2    # while i < 9, compute
+			        div $t0, $t3        # i mod 2
+			        mfhi $t6           # temp for the mod
+			        beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
+			        add $t2, $t2, $t0   # k = k + i
+						Lmod:
+			   			add $t0, $t0, 1     # i++
+		        	j L1               # repeat the while loop
+
+						L2:
+							addi AuxModulus2, $zero, $t2
+
+
+					lw $ra, 0($sp)
+					addi $sp, $sp, 4
+					jr $ra
+
+		lw $ra, 0($sp)
+		addi $sp, $sp, 4
+		jr $ra
