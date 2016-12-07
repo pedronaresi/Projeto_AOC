@@ -44,10 +44,12 @@
 	NextPiece:		.word 0				#ID da Próxima Peça
 	XRotation:		.word 0				#Coordenada X do Centro de Rotação da peça Atual
 	YRotation:		.word 0				#Coordenada Y do Centro de Rotação da peça Atual
-	Score:				.word 0				#Armazena a pontuacao
-	ResetNumber:	.word 0				#Armazena o numero de resets no player(toda vez que a pontuacao chegar a 999 ele reseta)
+	Score:			.word 0				#Armazena a pontuacao
+	Tick:			.word 0				#Tick Atual	
+	ResetNumber:		.word 0				#Armazena o numero de resets no player(toda vez que a pontuacao chegar a 999 ele reseta)
 	AuxModulus:		.word 0				#Data auxiliar para calcular modulo
-	AuxModulus2:	.word 0				#Data auxiliar para calcular modulo
+	AuxModulus2:		.word 0				#Data auxiliar para calcular modulo
+	TickSpeed:		.word 50000			#TickRate do Jogo
 .text
 
 .globl main
@@ -57,6 +59,8 @@ main:
 	jal NewGame
 	jal GameLoop
 	li $v0, 10
+	
+	
 	syscall
 
 
@@ -74,12 +78,242 @@ main:
 GameLoop:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-
-
+	
+	LoopStart:
+		#Ler botão e fazer ação se houver
+		
+		
+		
+		
+		#Atualiza Jogo
+		la $t0, Tick
+		lw $t1, 0($t0)
+		addi $t1, $t1, 1
+		sw $t1, 0($t0)
+		lw $t5, TickSpeed
+		move $t2, $t5
+		slt $t3, $t1, $t2
+		beq $t3, 1, LoopStart
+		li $t1, 0
+		sw $t1, ($t0)
+		jal FixPieceCondition
+		
+		bne $a0, 1, Dropped
+		jal CopyPieceToFixed
+		jal ResetPieceArray
+		j NotDropped
+		Dropped:
+		jal DropPiece
+		NotDropped:
+		jal CopiaMemoria
+		jal CopiaMemoriaFixa
+		j LoopStart
+		
+		
+		
+		
+	
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
 
+
+
+
+
+#Move todas as peças móveis para baixo
+DropPiece:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	li $t0, 0
+	
+	DropPieceILoop:
+		li $t1, 21
+		DropPieceJLoop:
+			
+			move $a0, $t0
+			addi $a1, $t1, -1
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			jal GetPieceArrayElement
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			move $a2, $a0
+			move $a0, $t0
+			move $a1, $t1
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			jal SetValueToPieceArray
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4	
+			addi $t1, $t1, -1
+			bne $t1, -1, DropPieceJLoop
+			
+			
+		addi $t0, $t0, 1
+		bne $t0, 10, DropPieceILoop	
+		
+			
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+	
+	
+#Checa se está em condição para transformar a peça móvel em fixa
+#$a0 retorna 1 se Sim ou 0 se Não
+FixPieceCondition:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	li $t0, 0
+	PieceConditionILoop:
+		li $t0, 0
+		PieceConditionJLoop:
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			move $a0, $t0
+			move $a1, $t1
+			jal GetPieceArrayElement
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			addi $sp, $sp, -4
+			sw $a0, 0($sp)
+			
+			move $a1, $t1
+			add $a1, $a1, -1
+			jal GetFixedArrayElement
+			move $t3, $a0
+			
+			lw $t2, 0($sp)
+			addi $sp, $sp, 4
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			
+			beqz $t3, BlockingPieceNotFound
+			beqz $t2, BlockingPieceNotFound
+			li $a0, 1
+			j ExitPieceConditionFunction
+			
+			BlockingPieceNotFound:
+			addi $t1, $t1, 1
+			bne $t1, 22, PieceConditionJLoop
+			
+		
+		addi $t0, $t0, 1
+		bne $t0, 10, PieceConditionILoop
+	li $a0, 0
+	
+	ExitPieceConditionFunction:
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+
+
+#Coloca elemento na posição (x,y) da Matriz de Peças Móveis
+#$a0: Coordenada x
+#$a1: Coordenada y
+#$a2: Cor
+SetValueToPieceArray:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	la $t0, PieceArray
+	mul $t1, $a1, 10
+	mul $t1, $t1, 4
+	add $t0, $t0, $t1
+	mul $t2, $a0, 4
+	add $t0, $t0, $t2
+	sw $a2, 0($t0)
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+
+#Retorna o elemento que está na posição (x,y) da Matriz de Peças móveis no registrador $a0
+#$a0: Coordenada x
+#$a1; Coordenada y
+GetPieceArrayElement:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	slti $t0, $a0, 10
+	beqz $t0, PieceArrayElementAlreadyPicked
+	slti $t0, $a1, 22
+	beqz $t0, PieceArrayElementAlreadyPicked
+	slti $t0, $a0, 0
+	bnez $t0, PieceArrayElementAlreadyPicked
+	slti $t0, $a1, 0
+	bnez $t0, PieceArrayElementAlreadyPicked
+	la $t0, PieceArray
+	mul $t1, $a1, 10
+	mul $t1, $t1, 4
+	add $t0, $t0, $t1
+	mul $t2, $a0, 4
+	add $t0, $t0, $t2
+	lw $a0, 0($t0)
+	j ExitPieceArrayFunction
+	
+	PieceArrayElementAlreadyPicked:
+	li $a0, 0
+	
+	ExitPieceArrayFunction:
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+#Retorna o elemento que está na posição (x,y) da Matriz de peças fixas no registrador $a0
+#$a0: Coordenada x
+#$a1; Coordenada y
+GetFixedArrayElement:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	slti $t0, $a0, 10
+	beqz $t0, FixedArrayElementAlreadyPicked
+	slti $t0, $a1, 22
+	beqz $t0, FixedArrayElementAlreadyPicked
+	slti $t0, $a0, 0
+	bnez $t0, FixedArrayElementAlreadyPicked
+	slti $t0, $a1, 0
+	bnez $t0, FixedArrayElementAlreadyPicked
+	la $t0, FixedArray
+	mul $t1, $a1, 10
+	mul $t1, $t1, 4
+	add $t0, $t0, $t1
+	mul $t2, $a0, 4
+	add $t0, $t0, $t2
+	lw $a0, 0($t0)
+	j ExitFixedArrayFunction
+	
+	FixedArrayElementAlreadyPicked:
+	li $a0, 1
+	
+	ExitFixedArrayFunction:
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
 
 ##########################################################
 # Funções Gráficas e Auxiliares				 #
@@ -741,6 +975,48 @@ RandomColor:
 	addi $sp, $sp, 4
 	jr $ra
 
+
+#Copia peças móveis para a Matriz de peças fixas
+CopyPieceToFixed:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t1, PieceArray
+	la $t2, FixedArray
+	li $t0, 0
+	CopyPieceToFixedILoop:
+		
+		lw $t3, 0($t1)
+		beqz $t3, NotAPiece
+		sw $t3, 0($t2)
+		
+		NotAPiece:
+		
+		addi $t1, $t1, 4
+		addi $t2, $t2, 4
+		addi $t0, $t0, 1
+		bne $t0, 220 CopyPieceToFixedILoop
+		
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+ResetPieceArray:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t1, PieceArray
+	li $t0, 0
+	ResetPieceILoop:
+		
+		lw $zero, 0($t1)
+		addi $t1, $t1, 4
+		addi $t0, $t0, 1
+		bne $t0, 220, ResetPieceILoop
+	
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
 #Decodifica peça passada em $a0 para a memória de Spawn e $a1 sendo a cor da peça
 SelectNewSpawnPiece:
 	addi $sp, $sp, -4
