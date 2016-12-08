@@ -49,8 +49,11 @@
 	ResetNumber:		.word 0				#Armazena o numero de resets no player(toda vez que a pontuacao chegar a 999 ele reseta)
 	AuxModulus:		.word 0				#Data auxiliar para calcular modulo
 	AuxModulus2:		.word 0				#Data auxiliar para calcular modulo
-	TickSpeed:		.word 80000			#TickRate do Jogo
-	#TickSpeed:		.word 1000			#TickRate do Jogo
+	TickSpeed:		.word 50000			#TickRate do Jogo
+	PieceState:		.word 0				#Aux para a Rotação da peça I
+	TempFixedArray:		.word 0:16			#Matriz Local de Blocos fixos
+	TempPieceArray:		.word 0:16			#Matriz Local de Blocos Móveis
+	TempRotateArray:	.word 0:16			#Matriz Local de Blocos Rotacionados
 .text
 
 .globl main
@@ -66,7 +69,7 @@ main:
 
 
 ###########################################################
-# 		Funções de Lógica de Game 		  #
+# 		Funções de Lógica de Jogo 		  #
 ###########################################################
 #			Controles			  #
 # 1 - Mover para Esquerda	#49#		  	  #
@@ -114,11 +117,16 @@ GameLoop:
 			jal CopiaMemoriaFixa
 			j DoAfter
 		ButtonSwitch4:
-			
+			lw $t0, CurrentPiece
+			beqz $t0, DoAfter
+			jal Rotate
+			jal CopiaMemoria
+			jal CopiaMemoriaFixa
 			j DoAfter
 		ButtonSwitch5:
 			addi $sp, $sp, 4
 			j main
+		
 		DoAfter:
 		jal ZeraBotoes
 		
@@ -143,6 +151,7 @@ GameLoop:
 		bnez $a0, ExitGame
 		jal ResetPieceArray
 		jal SpawnNewPiece
+		jal AllLineClear
 		j NotDropped
 		Dropped:
 		jal DropPiece
@@ -161,6 +170,375 @@ GameLoop:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
+
+#Rotaciona a Peça
+Rotate:
+	addi $sp, $sp, -4 
+	sw $ra, 0($sp)
+	jal GetRotationArrayRegion
+	jal GetFixedArrayRegion
+	jal CreateRotatedArray
+	jal CheckRotationOverlap
+	bnez $a0, IgnoreRotation
+	jal CommitRotation
+	IgnoreRotation:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+#Copia a Região temporária rotacionada para a Piece Array
+CommitRotation:
+	addi $sp, $sp, -4 
+	sw $ra, 0($sp)
+	la $t0, TempRotateArray
+	lw $t1, XRotation
+	lw $t2, YRotation
+	addi $t1, $t1, -2
+	addi $t2, $t2, -1
+	li $t3, 0
+	CommitILoop:
+		li $t4, 0
+		CommitJLoop:
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			addi $sp, $sp, -4
+			sw $t2, 0($sp)
+			addi $sp, $sp, -4
+			sw $t3, 0($sp)
+			addi $sp, $sp, -4
+			sw $t4, 0($sp)
+			
+			add $a0, $t1, $t4
+			add $a1, $t2, $t3
+			lw $a2, 0($t0)
+			jal SetValueToPieceArray
+					
+			lw $t4, 0($sp)
+			addi $sp, $sp, 4
+			lw $t3, 0($sp)
+			addi $sp, $sp, 4	
+			lw $t2, 0($sp)
+			addi $sp, $sp, 4	
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4	
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4	
+			
+			addi $t0, $t0, 4
+			addi $t4, $t4, 1
+			bne $t4, 4, CommitJLoop
+	addi $t3, $t3, 1
+	bne $t3, 4, CommitILoop
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+
+#Checa se há conflito de Peças
+#Devolve em $a0: 1 se Sim, 0 se Não
+CheckRotationOverlap: 
+	addi $sp, $sp, -4 
+	sw $ra, 0($sp)
+	lw $t0, CurrentPiece
+	la $t1, TempFixedArray
+	la $t2, TempRotateArray
+	li $t3, 0
+	li $a0, 0
+	RotationOverlapILoop:
+		lw $t4, 0($t1)
+		lw $t5, 0($t2)
+		beqz $t4, NoOverlap
+		beqz $t5, NoOverlap
+		li $a0, 1
+		j ExitOverlapFunction
+		NoOverlap:
+		addi $t1, $t1, 4
+		addi $t2, $t2, 4
+		addi $t3, $t3, 1
+		bne $t3, 16, RotationOverlapILoop
+	
+	ExitOverlapFunction:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+	
+#Gera a Matriz Rotacionada a partir da Matriz de rotação Móvel
+CreateRotatedArray:
+	addi $sp, $sp, -4 
+	sw $ra, 0($sp)
+	lw $t0, CurrentPiece
+	bne $t0, 1, GenericPiece
+	jal ExceptionPiece
+	j ExitRotateArrayFunction
+	
+	
+	
+	GenericPiece:
+	sw $ra, 0($sp)
+	la $t0, TempRotateArray
+	la $t1, TempPieceArray
+	
+	sw $zero 0($t0)
+	
+	lw $t2, 36($t1)
+	sw $t2, 4($t0)
+	
+	lw $t2, 20($t1)
+	sw $t2, 8($t0)
+	
+	lw $t2, 4($t1)
+	sw $t2, 12($t0)
+	
+	sw $zero, 16($t0)
+	
+	lw $t2, 40($t1)
+	sw $t2, 20($t0)
+	
+	lw $t2, 24($t1)
+	sw $t2, 24($t0)
+	
+	lw $t2, 8($t1)
+	sw $t2, 28($t0)
+	
+	sw $zero, 32($t0)
+	
+	lw $t2, 44($t1)
+	sw $t2, 36($t0)
+	
+	lw $t2, 28($t1)
+	sw $t2, 40($t0)
+	
+	lw $t2, 12($t1)
+	sw $t2, 44($t0)
+	
+	sw $zero, 48($t0)
+	sw $zero, 52($t0)
+	sw $zero, 56($t0)
+	sw $zero, 60($t0)
+	
+	ExitRotateArrayFunction:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+#Faz a Exceção da peça I
+ExceptionPiece:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t0, TempRotateArray
+	la $t1, TempPieceArray
+	lw $t2, 24($t1)
+	lw $t3, PieceState
+	
+	bnez $t3, Estado2
+	sw $zero, 0($t0)
+	sw $zero, 4($t0)
+	sw $t2, 8($t0)
+	sw $zero, 12($t0)
+	sw $zero, 16($t0)
+	sw $zero, 20($t0)
+	sw $t2, 24($t0)
+	sw $zero, 28($t0)
+	sw $zero, 32($t0)
+	sw $zero, 36($t0)
+	sw $t2, 40($t0)
+	sw $zero, 44($t0)
+	sw $zero, 48($t0)
+	sw $zero, 52($t0)
+	sw $t2, 56($t0)
+	sw $zero, 60($t0)
+	
+	li $t1, 1
+	sw $t1, PieceState
+	
+	j ExitExceptionPiece
+	Estado2:
+	sw $zero, 0($t0)
+	sw $zero, 4($t0)
+	sw $zero, 8($t0)
+	sw $zero, 12($t0)
+	sw $t2, 16($t0)
+	sw $t2, 20($t0)
+	sw $t2, 24($t0)
+	sw $t2, 28($t0)
+	sw $zero, 32($t0)
+	sw $zero, 36($t0)
+	sw $zero, 40($t0)
+	sw $zero, 44($t0)
+	sw $zero, 48($t0)
+	sw $zero, 52($t0)
+	sw $zero, 56($t0)
+	sw $zero, 60($t0)
+	sw $zero, PieceState
+	
+	ExitExceptionPiece:
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+#Pega a Região de rotação móvel a partir do par (x,y) na memória
+GetRotationArrayRegion:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t5, TempPieceArray
+	lw $t1, XRotation
+	lw $t2, YRotation
+	addi $t2, $t2, -1
+	addi $t1, $t1 -2
+	li $t3, 0
+	RotArrayReILoop:
+		li $t4, 0
+		RotArrayReJLoop:
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			addi $sp, $sp, -4
+			sw $t2, 0($sp)
+			addi $sp, $sp, -4
+			sw $t3, 0($sp)
+			addi $sp, $sp, -4
+			sw $t4, 0($sp)
+			addi $sp, $sp, -4
+			sw $t5, 0($sp)
+			
+			add $a0, $t4, $t1
+			add $a1, $t3, $t2
+			jal GetPieceArrayElement
+			
+			lw $t5, 0($sp)
+			addi $sp, $sp, 4
+			lw $t4, 0($sp)
+			addi $sp, $sp, 4
+			lw $t3, 0($sp)
+			addi $sp, $sp, 4
+			lw $t2, 0($sp)
+			addi $sp, $sp, 4
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			
+			sw $a0, 0($t5)
+			addi $t5, $t5, 4
+			
+			addi $t4, $t4, 1
+			bne $t4, 4, RotArrayReJLoop
+		
+		addi $t3, $t3, 1
+		bne $t3, 4, RotArrayReILoop
+		
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+#Pega a Região de rotação Fixa a partir do par (x,y) na memória
+GetFixedArrayRegion:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t5, TempFixedArray
+	lw $t1, XRotation
+	lw $t2, YRotation
+	addi $t2, $t2, -1
+	addi $t1, $t1 -2
+	li $t3, 0
+	RotFixedReILoop:
+		li $t4, 0
+		RotFixedReJLoop:
+
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			addi $sp, $sp, -4
+			sw $t2, 0($sp)
+			addi $sp, $sp, -4
+			sw $t3, 0($sp)
+			addi $sp, $sp, -4
+			sw $t4, 0($sp)
+			addi $sp, $sp, -4
+			sw $t5, 0($sp)
+			
+			add $a0, $t4, $t1
+			add $a1, $t3, $t2
+			jal GetFixedArrayElement
+			
+
+			lw $t5, 0($sp)
+			addi $sp, $sp, 4
+			lw $t4, 0($sp)
+			addi $sp, $sp, 4
+			lw $t3, 0($sp)
+			addi $sp, $sp, 4
+			lw $t2, 0($sp)
+			addi $sp, $sp, 4
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			
+			sw $a0, 0($t5)
+			addi $t5, $t5, 4
+			
+			addi $t4, $t4, 1
+			bne $t4, 4, RotFixedReJLoop
+		
+		addi $t3, $t3, 1
+		bne $t3, 4, RotFixedReILoop
+		
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+#Checa quais Linhas devem ser limpas e as limpa se necessário
+AllLineClear:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	li $t0, 2
+	AllLineClearILoop:
+		addi $sp, $sp, -4
+		sw $t0, 0($sp)
+		move $a0, $t0
+		jal LineClear
+		lw $t0, 0($sp)
+		addi, $sp, $sp 4
+		addi $t0, $t0, 1
+		bne $t0, 22, AllLineClearILoop
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+#Dado um y, checa se a linha deve ser limpa e limpa se necessário
+#$a0: Linha que deve ser limpa
+LineClear:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t0, FixedArray
+	move $t1, $a0
+	mul $t1, $t1, 10
+	mul $t1, $t1, 4
+	add $t0, $t0, $t1
+	li $t1, 0
+	LineClearILoop:
+		lw $t2, 0($t0)
+		beqz $t2, ExitLineClearFunction
+		addi $t0, $t0, 4
+		addi $t1, $t1, 1
+		bne $t1, 10, LineClearILoop
+	jal DropFixedPiece
+	lw $t0, TickSpeed
+	li $t1, 10000
+	slt $t1, $t1, $t0
+	bnez $t1, ExitLineClearFunction
+	addi $t0, $t0, -500
+	la $t1, TickSpeed
+	sw $t0, 0($t1)
+	
+	ExitLineClearFunction:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
 
 #Desce a peça atual para seu limite
 HardDrop:
@@ -191,7 +569,10 @@ LeftMove:
 		addi $t0, $t0, 4
 		addi $t1, $t1, 1
 		bne $t1, 219, LeftMoveILoop
-	lw $zero, 0($t0)
+	li $a0, 9
+	li $a1, 21
+	li $a2, 0
+	jal SetValueToPieceArray
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
@@ -216,6 +597,54 @@ RightMove:
 	addi $sp, $sp, 4
 	jr $ra
 
+#Move todas as peças móveis para baixo a partir de um Y dado
+#$a0: Y base
+DropFixedPiece:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	li $t0, 0
+	move $t1, $a0
+	DropFixedPieceILoop:
+		addi $sp, $sp, -4
+		sw $t1, 0($sp)
+		DropFixedPieceJLoop:
+			
+			move $a0, $t0
+			addi $a1, $t1, -1
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			jal GetFixedArrayElement
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			move $a2, $a0
+			move $a0, $t0
+			move $a1, $t1
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			jal SetValueToFixedArray
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+				
+			addi $t1, $t1, -1
+			bne $t1, 0, DropFixedPieceJLoop
+		
+		lw $t1, 0($sp)
+		addi $sp, $sp, 4
+		addi $t0, $t0, 1
+		bne $t0, 10, DropFixedPieceILoop	
+		
+			
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
 #Move todas as peças móveis para baixo
 DropPiece:
 	addi $sp, $sp, -4
@@ -488,8 +917,38 @@ CheckRightBoundary:
 SetValueToPieceArray:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
+	slti $t0, $a0, 10
+	beqz $t0, ExitValuePieceArrayFunction
+	slti $t0, $a1, 22
+	beqz $t0, ExitValuePieceArrayFunction
+	slti $t0, $a0, 0
+	bnez $t0, ExitValuePieceArrayFunction
+	slti $t0, $a1, 0
+	bnez $t0, ExitValuePieceArrayFunction
 	
 	la $t0, PieceArray
+	mul $t1, $a1, 10
+	mul $t1, $t1, 4
+	add $t0, $t0, $t1
+	mul $t2, $a0, 4
+	add $t0, $t0, $t2
+	sw $a2, 0($t0)
+	
+	
+	ExitValuePieceArrayFunction:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+#Coloca elemento na posição (x,y) da Matriz de Peças Fixas
+#$a0: Coordenada x
+#$a1: Coordenada y
+#$a2: Cor
+SetValueToFixedArray:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	la $t0, FixedArray
 	mul $t1, $a1, 10
 	mul $t1, $t1, 4
 	add $t0, $t0, $t1
@@ -1107,7 +1566,7 @@ NewGame:
 		jal ResetPieceArray
 		jal ResetFixedArray
 		sw $zero, Tick
-		li $t0, 30000
+		li $t0, 25000
 		sw $t0, TickSpeed
 		
 		
@@ -1756,6 +2215,7 @@ CreateNewBag:
 Spawn:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
+	sw $zero, PieceState
 	la $t0, PieceArray
 	#addi $t0, $t0, 80 #Comando de Teste para spawnar no espaço visível. Não utilizado no Jogo final
 	addi $t0, $t0, 12
