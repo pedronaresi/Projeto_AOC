@@ -49,18 +49,19 @@
 	ResetNumber:		.word 0				#Armazena o numero de resets no player(toda vez que a pontuacao chegar a 999 ele reseta)
 	AuxModulus:		.word 0				#Data auxiliar para calcular modulo
 	AuxModulus2:		.word 0				#Data auxiliar para calcular modulo
-	TickSpeed:		.word 50000			#TickRate do Jogo
+	TickSpeed:		.word 80000			#TickRate do Jogo
+	#TickSpeed:		.word 1000			#TickRate do Jogo
 .text
 
 .globl main
 
 
 main:
+	jal ZeraBotoes
 	jal NewGame
 	jal GameLoop
+		
 	li $v0, 10
-	
-	
 	syscall
 
 
@@ -68,22 +69,44 @@ main:
 # 		Funções de Lógica de Game 		  #
 ###########################################################
 #			Controles			  #
-# 1 - Mover para Esquerda			  	  #
-# 2 - Mover para Direita			  	  #
-# 3 - Rotacionar Peça   			  	  #
-# 4 - Drop					  	  #
-# 5 - Restart Game				  	  #
+# 1 - Mover para Esquerda	#49#		  	  #
+# 2 - Mover para Direita	#50#		  	  #
+# 3 - Rotacionar Peça   	#51#		  	  #
+# 4 - Drop			#52#		  	  #
+# 5 - Restart Game		#53#		  	  #
 ###########################################################
 
 GameLoop:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-	
 	LoopStart:
 		#Ler botão e fazer ação se houver
+		lw $t1, 0xFFFF0004
+		beq $t1, 49, ButtonSwitch1
+		beq $t1, 50, ButtonSwitch2
+		beq $t1, 51, ButtonSwitch3
+		beq $t1, 52, ButtonSwitch4
+		beq $t1, 53, ButtonSwitch5
+		j ButtonSwitchExit
+		ButtonSwitch1:
+			
+			j DoAfter
+		ButtonSwitch2:
+			
+			j DoAfter
+		ButtonSwitch3:
+			
+			j DoAfter
+		ButtonSwitch4:
+			
+			j DoAfter
+		ButtonSwitch5:
+			addi $sp, $sp, 4
+			j main
+		DoAfter:
+		jal ZeraBotoes
 		
-		
-		
+		ButtonSwitchExit:
 		
 		#Atualiza Jogo
 		la $t0, Tick
@@ -96,26 +119,33 @@ GameLoop:
 		beq $t3, 1, LoopStart
 		li $t1, 0
 		sw $t1, ($t0)
-		jal FixPieceCondition
 		
+		jal FixPieceCondition
 		bne $a0, 1, Dropped
 		jal CopyPieceToFixed
+		jal LoseCondition
+		bnez $a0, ExitGame
 		jal ResetPieceArray
+		jal SpawnNewPiece
 		j NotDropped
 		Dropped:
 		jal DropPiece
+		lw $t0, YRotation
+		addi $t0, $t0, 1
+		sw $t0, YRotation
 		NotDropped:
 		jal CopiaMemoria
 		jal CopiaMemoriaFixa
 		j LoopStart
 		
 		
+	ExitGame:
 		
-		
-	
+	li $a0, 0
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
+
 
 
 
@@ -153,11 +183,11 @@ DropPiece:
 			lw $t1, 0($sp)
 			addi $sp, $sp, 4
 			lw $t0, 0($sp)
-			addi $sp, $sp, 4	
+			addi $sp, $sp, 4
+				
 			addi $t1, $t1, -1
 			bne $t1, -1, DropPieceJLoop
-			
-			
+
 		addi $t0, $t0, 1
 		bne $t0, 10, DropPieceILoop	
 		
@@ -167,6 +197,31 @@ DropPiece:
 	jr $ra
 	
 	
+#Checa se a condição de derrota foi alcançada
+#$a0 retorna 1 se Sim ou 0 se Não
+LoseCondition:
+	addi $sp, $sp -4
+	sw $ra, 0($sp)
+	la $t0, FixedArray
+	li $t1, 0
+	li $a0, 0
+	LoseConditionILoop:
+		
+		lw $t3, 0($t0)
+		bnez $t3, GameOver
+		addi $t0, $t0, 4
+		addi $t1, $t1, 1
+		bne $t1, 20, LoseConditionILoop
+	
+	j ExitLoseConditionFunction
+	GameOver:
+	li $a0, 1
+	
+	ExitLoseConditionFunction:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
 	
 #Checa se está em condição para transformar a peça móvel em fixa
 #$a0 retorna 1 se Sim ou 0 se Não
@@ -175,7 +230,7 @@ FixPieceCondition:
 	sw $ra, 0($sp)
 	li $t0, 0
 	PieceConditionILoop:
-		li $t0, 0
+		li $t1, 0
 		PieceConditionJLoop:
 			addi $sp, $sp, -4
 			sw $t0, 0($sp)
@@ -196,8 +251,10 @@ FixPieceCondition:
 			addi $sp, $sp, -4
 			sw $a0, 0($sp)
 			
+			
 			move $a1, $t1
-			add $a1, $a1, -1
+			add $a1, $a1, 1
+			move $a0, $t0
 			jal GetFixedArrayElement
 			move $t3, $a0
 			
@@ -220,6 +277,7 @@ FixPieceCondition:
 		
 		addi $t0, $t0, 1
 		bne $t0, 10, PieceConditionILoop
+		
 	li $a0, 0
 	
 	ExitPieceConditionFunction:
@@ -842,9 +900,9 @@ NewGame:
 		lw $t1, 0xFFFF0004		# check to see which key has been pressed
 		beq $t1, 0x00000031, ComecaJogo # 1 pressed
 
-		li $a0, 500	#
-		li $v0, 32	# pause for 250 milisec
-		syscall		#
+		#li $a0, 500	#
+		#li $v0, 32	# pause for 250 milisec
+		#syscall		#
 
 		j SelectMode    # Jump back to the top of the wait loop
 
@@ -853,6 +911,11 @@ NewGame:
 		jal TelaPreta
 		jal TelaJogo
 		jal RandomColor
+		jal ResetPieceArray
+		jal ResetFixedArray
+		sw $zero, Tick
+		
+		
 		addi $sp, $sp, -4
 		sw $a0, 0($sp)
 		jal GetElementFromBag
@@ -864,7 +927,7 @@ NewGame:
 		jal InitialRotationPos
 		sw $a0, XRotation
 		sw $a1, YRotation
-		#jal CopiaMemoriaProximaPeca
+		
 		jal Spawn
 		jal CopiaMemoria
 		jal RandomColor
@@ -880,6 +943,31 @@ NewGame:
 		addi $sp, $sp, 4
 		jr $ra
 
+#Spawna uma peça no Grid e troca a peça no Spawn Grid
+SpawnNewPiece:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	lw $a0, NextPiece
+	sw $a0, CurrentPiece
+	jal InitialRotationPos
+	sw $a0, XRotation
+	sw $a1, YRotation
+	jal Spawn
+	
+	jal RandomColor
+	addi $sp, $sp, -4
+	sw $a0, 0($sp)
+	jal GetElementFromBag
+	sw $a0, NextPiece
+	lw $a1, 0($sp)
+	addi $sp, $sp, 4
+	jal SelectNewSpawnPiece
+	jal CopiaMemoriaProximaPeca
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
 
 #Passado em $a0 o ID da peça devolve As coordenadas X e Y de centro de rotação inicial da peça
 #$a0: Coordenada X
@@ -1005,12 +1093,29 @@ ResetPieceArray:
 	sw $ra, 0($sp)
 	la $t1, PieceArray
 	li $t0, 0
-	ResetPieceILoop:
-		
-		lw $zero, 0($t1)
+	ResetPieceILoop:	
+		sw $zero, 0($t1)
 		addi $t1, $t1, 4
 		addi $t0, $t0, 1
 		bne $t0, 220, ResetPieceILoop
+	
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+	
+	
+ResetFixedArray:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t1, FixedArray
+	li $t0, 0
+	ResetFixedPieceILoop:	
+		sw $zero, 0($t1)
+		addi $t1, $t1, 4
+		addi $t0, $t0, 1
+		bne $t0, 220, ResetFixedPieceILoop
 	
 	
 	lw $ra, 0($sp)
@@ -1389,7 +1494,7 @@ TelaPreta:
 		jr $ra
 
 ZeraBotoes:
-		sw $zero, 0xFFFF0000		# clear the button pushed bit
+		sw $zero, 0xFFFF0004		# clear the button pushed bit
 		jr $ra
 
 
@@ -1494,6 +1599,7 @@ CopiaMemoria:
 			move $a0, $t1
 			move $a1, $t2
 			lw $a2, 0($t0)
+			
 			addi $sp, $sp, -4
 			sw $t0, 0($sp)
 			addi $sp, $sp, -4
@@ -1507,6 +1613,7 @@ CopiaMemoria:
 			addi $sp, $sp, 4
 			lw $t0, 0($sp)
 			addi $sp, $sp, 4
+			
 			addi $t1, $t1, 1
 			addi $t0, $t0, 4
 			bne $t1, 10, CopyJLoop
@@ -1975,4 +2082,3 @@ Desenha6:
 Desenha7:
 Desenha8:
 Desenha9:
-
