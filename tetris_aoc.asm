@@ -89,13 +89,29 @@ GameLoop:
 		beq $t1, 53, ButtonSwitch5
 		j ButtonSwitchExit
 		ButtonSwitch1:
-			
+			jal CheckLeftBoundary
+			bnez $a0, DoAfter
+			jal LeftMove
+			jal CopiaMemoria
+			jal CopiaMemoriaFixa
+			lw $t0, XRotation
+			addi $t0, $t0, -1
+			sw $t0, XRotation
 			j DoAfter
 		ButtonSwitch2:
-			
+			jal CheckRightBoundary
+			bnez $a0, DoAfter
+			jal RightMove
+			jal CopiaMemoria
+			jal CopiaMemoriaFixa
+			lw $t0, XRotation
+			addi $t0, $t0, 1
+			sw $t0, XRotation
 			j DoAfter
 		ButtonSwitch3:
-			
+			jal HardDrop
+			jal CopiaMemoria
+			jal CopiaMemoriaFixa
 			j DoAfter
 		ButtonSwitch4:
 			
@@ -146,10 +162,59 @@ GameLoop:
 	addi $sp, $sp, 4
 	jr $ra
 
+#Desce a peça atual para seu limite
+HardDrop:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	HardDropLoop:
+		jal FixPieceCondition
+		bnez $a0, QuitHardDropLoop
+		jal DropPiece
+		j HardDropLoop	
+	QuitHardDropLoop:
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
 
+#Move todas as peças móveis para a esquerda
+LeftMove:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t0, PieceArray
+	li $t1, 0
+	LeftMoveILoop:
+		lw $t2, 4($t0)
+		sw $t2, 0($t0)
+		addi $t0, $t0, 4
+		addi $t1, $t1, 1
+		bne $t1, 219, LeftMoveILoop
+	lw $zero, 0($t0)
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
 
-
-
+#Move todas as peças móveis para a direita
+RightMove:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	la $t0, PieceArray
+	li $t1, 0
+	lw $t2, 0($t0)
+	sw $zero, 0($t0)
+	addi $t0, $t0, 4
+	RightMoveILoop:
+		lw $t3, 0($t0)
+		sw $t2, 0($t0)
+		move $t2, $t3
+		addi $t0, $t0, 4
+		addi $t1, $t1, 1
+		bne $t1, 219, RightMoveILoop
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
 
 #Move todas as peças móveis para baixo
 DropPiece:
@@ -281,6 +346,134 @@ FixPieceCondition:
 	li $a0, 0
 	
 	ExitPieceConditionFunction:
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+	
+	
+#Checa há alguma peça fixa impedindo o movimento para a esquerda
+#$a0 retorna 1 se Sim ou 0 se Não
+CheckLeftBoundary:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	li $t0, 0
+	LeftBoundaryILoop:
+		li $t1, 0
+		LeftBoundaryJLoop:
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			move $a0, $t0
+			move $a1, $t1
+			jal GetPieceArrayElement
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			addi $sp, $sp, -4
+			sw $a0, 0($sp)
+			
+			
+			move $a1, $t1
+			move $a0, $t0
+			addi $a0, $a0, -1
+			jal GetFixedArrayElement
+			move $t3, $a0
+			
+			lw $t2, 0($sp)
+			addi $sp, $sp, 4
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			
+			beqz $t3, LeftBlockingPieceNotFound
+			beqz $t2, LeftBlockingPieceNotFound
+			li $a0, 1
+			j ExitLeftBoundaryFunction
+			
+			LeftBlockingPieceNotFound:
+			addi $t1, $t1, 1
+			bne $t1, 22, LeftBoundaryJLoop
+			
+		
+		addi $t0, $t0, 1
+		bne $t0, 10, LeftBoundaryILoop
+		
+	li $a0, 0
+	
+	ExitLeftBoundaryFunction:
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+#Checa há alguma peça fixa impedindo o movimento para a direta
+#$a0 retorna 1 se Sim ou 0 se Não
+CheckRightBoundary:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	li $t0, 0
+	RightBoundaryILoop:
+		li $t1, 0
+		RightBoundaryJLoop:
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			move $a0, $t0
+			move $a1, $t1
+			jal GetPieceArrayElement
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			
+			addi $sp, $sp, -4
+			sw $t0, 0($sp)
+			addi $sp, $sp, -4
+			sw $t1, 0($sp)
+			addi $sp, $sp, -4
+			sw $a0, 0($sp)
+			
+			
+			move $a1, $t1
+			move $a0, $t0
+			addi $a0, $a0, 1
+			jal GetFixedArrayElement
+			move $t3, $a0
+			
+			lw $t2, 0($sp)
+			addi $sp, $sp, 4
+			lw $t1, 0($sp)
+			addi $sp, $sp, 4
+			lw $t0, 0($sp)
+			addi $sp, $sp, 4
+			
+			beqz $t3, RightBlockingPieceNotFound
+			beqz $t2, RightBlockingPieceNotFound
+			li $a0, 1
+			j ExitRightBoundaryFunction
+			
+			RightBlockingPieceNotFound:
+			addi $t1, $t1, 1
+			bne $t1, 22, RightBoundaryJLoop
+			
+		
+		addi $t0, $t0, 1
+		bne $t0, 10, RightBoundaryILoop
+		
+	li $a0, 0
+	
+	ExitRightBoundaryFunction:
 	
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
@@ -914,6 +1107,8 @@ NewGame:
 		jal ResetPieceArray
 		jal ResetFixedArray
 		sw $zero, Tick
+		li $t0, 30000
+		sw $t0, TickSpeed
 		
 		
 		addi $sp, $sp, -4
@@ -2082,3 +2277,4 @@ Desenha6:
 Desenha7:
 Desenha8:
 Desenha9:
+
