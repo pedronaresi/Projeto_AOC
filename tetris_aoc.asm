@@ -27,6 +27,7 @@
 	corMargemJogo:		.word 0x00c0c0c0		#Cor da Margem Jogo: Silver
 	corMargem:		.word 0x00ffffff		#Cor da Margem: Branco
 	corFundo:		.word 0x00000000		#Cor do Fundo: Preto
+	corDigito:		.word 0x00ffd700		
 	mode:			.word 0
 	IDblocoI: 		.word 0				#ID para gerar o bloco I
 	IDblocoJ: 		.word 1				#ID para gerar o bloco I
@@ -44,7 +45,7 @@
 	NextPiece:		.word 0				#ID da Próxima Peça
 	XRotation:		.word 0				#Coordenada X do Centro de Rotação da peça Atual
 	YRotation:		.word 0				#Coordenada Y do Centro de Rotação da peça Atual
-	Score:			.word -1				#Armazena a pontuacao
+	Score:			.word 0				#Armazena a pontuacao
 	Tick:			.word 0				#Tick Atual	
 	ResetNumber:		.word 0				#Armazena o numero de resets no player(toda vez que a pontuacao chegar a 999 ele reseta)
 	AuxModulus:		.word 0				#Data auxiliar para calcular modulo
@@ -54,16 +55,22 @@
 	TempFixedArray:		.word 0:16			#Matriz Local de Blocos fixos
 	TempPieceArray:		.word 0:16			#Matriz Local de Blocos Móveis
 	TempRotateArray:	.word 0:16			#Matriz Local de Blocos Rotacionados
+	ScoreXBase:		.word 39
+	ScoreYBase:		.word 20
+	TickReseted:		.word 0
 .text
 
 .globl main
 
 
 main:
+	lw $a0, Score
+	li $v0, 1
+	syscall
 	jal ZeraBotoes
 	jal NewGame
 	jal GameLoop
-		
+
 	li $v0, 10
 	syscall
 
@@ -82,6 +89,7 @@ main:
 GameLoop:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
+	sw $zero, TickReseted
 	LoopStart:
 		#Ler botão e fazer ação se houver
 		lw $t1, 0xFFFF0004
@@ -115,6 +123,12 @@ GameLoop:
 			jal HardDrop
 			jal CopiaMemoria
 			jal CopiaMemoriaFixa
+			lw $t0, TickReseted
+			bnez $t0, CantReset
+				sw $zero, Tick
+				li $t1, 1
+				sw $t1, TickReseted
+			CantReset:
 			j DoAfter
 		ButtonSwitch4:
 			lw $t0, CurrentPiece
@@ -152,15 +166,14 @@ GameLoop:
 		jal ResetPieceArray
 		jal SpawnNewPiece
 		jal AllLineClear
+		jal DrawScore
 		j NotDropped
 		Dropped:
 		jal DropPiece
-		lw $t0, YRotation
-		addi $t0, $t0, 1
-		sw $t0, YRotation
 		NotDropped:
 		jal CopiaMemoria
 		jal CopiaMemoriaFixa
+		sw $zero, TickReseted
 		j LoopStart
 		
 		
@@ -190,6 +203,15 @@ Rotate:
 CommitRotation:
 	addi $sp, $sp, -4 
 	sw $ra, 0($sp)
+	lw $t1, PieceState
+	bnez $t1, State1
+	li $t1, 1
+	sw $t1, PieceState
+	j ExitIf
+	State1:
+	sw $zero, PieceState
+	ExitIf:
+	
 	la $t0, TempRotateArray
 	lw $t1, XRotation
 	lw $t2, YRotation
@@ -352,8 +374,7 @@ ExceptionPiece:
 	sw $t2, 56($t0)
 	sw $zero, 60($t0)
 	
-	li $t1, 1
-	sw $t1, PieceState
+
 	
 	j ExitExceptionPiece
 	Estado2:
@@ -373,8 +394,7 @@ ExceptionPiece:
 	sw $zero, 52($t0)
 	sw $zero, 56($t0)
 	sw $zero, 60($t0)
-	sw $zero, PieceState
-	
+
 	ExitExceptionPiece:
 	
 	lw $ra, 0($sp)
@@ -526,11 +546,14 @@ LineClear:
 		addi $t1, $t1, 1
 		bne $t1, 10, LineClearILoop
 	jal DropFixedPiece
+	lw $t1, Score
+	addi $t1, $t1, 1
+	sw $t1, Score
 	lw $t0, TickSpeed
 	li $t1, 10000
 	slt $t1, $t1, $t0
-	bnez $t1, ExitLineClearFunction
-	addi $t0, $t0, -500
+	beqz $t1, ExitLineClearFunction
+	addi $t0, $t0, -1500
 	la $t1, TickSpeed
 	sw $t0, 0($t1)
 	
@@ -684,7 +707,9 @@ DropPiece:
 
 		addi $t0, $t0, 1
 		bne $t0, 10, DropPieceILoop	
-		
+		lw $t0, YRotation
+		addi $t0, $t0, 1
+		sw $t0, YRotation
 			
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
@@ -1565,34 +1590,15 @@ NewGame:
 		jal RandomColor
 		jal ResetPieceArray
 		jal ResetFixedArray
+		sw $zero, Score
+		jal DrawScore
 		sw $zero, Tick
 		li $t0, 25000
 		sw $t0, TickSpeed
 		
 		
-		addi $sp, $sp, -4
-		sw $a0, 0($sp)
-		jal GetElementFromBag
-		sw $a0, CurrentPiece
-		lw $a1, 0($sp)
-		addi $sp, $sp, 4
-		jal SelectNewSpawnPiece
-		lw $a0, CurrentPiece
-		jal InitialRotationPos
-		sw $a0, XRotation
-		sw $a1, YRotation
-		
-		jal Spawn
-		jal CopiaMemoria
-		jal RandomColor
-		addi $sp, $sp, -4
-		sw $a0, 0($sp)
-		jal GetElementFromBag
-		sw $a0, NextPiece
-		lw $a1, 0($sp)
-		addi $sp, $sp, 4
-		jal SelectNewSpawnPiece
-		jal CopiaMemoriaProximaPeca
+		jal SpawnNewPiece
+		jal SpawnNewPiece
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
 		jr $ra
@@ -2088,41 +2094,6 @@ TelaJogo:
 		li $a3, 55
 		jal DrawHorizontalLine
 		
-		
-
-		#Desenhando Espaço de Score
-		#X Absoluto Base: 45
-		#Y Abosuluto Base: 10
-		li $a0, 41 #Comeco de x
-		li $a1 40 #Comeco de Y
-		lw $a2, corFundo
-		li $a3, 57 #Limite de x
-		jal DrawHorizontalLine
-
-		li $a0, 41
-		li $a1 41
-		lw $a2, corFundo
-		li $a3, 57
-		jal DrawHorizontalLine
-
-		li $a0, 41
-		li $a1 42
-		lw $a2, corFundo
-		li $a3, 57
-		jal DrawHorizontalLine
-
-		li $a0, 41
-		li $a1 43
-		lw $a2, corFundo
-		li $a3, 57
-		jal DrawHorizontalLine
-
-		li $a0, 41
-		li $a1 44
-		lw $a2, corFundo
-		li $a3, 57
-		jal DrawHorizontalLine
-		
 		#jal AtualizaScore
 
 		lw $ra, 0($sp)
@@ -2407,7 +2378,7 @@ CopiaMemoriaProximaPeca:
 				move $a0, $t3
 				add $a1, $t4, $t6
 				move $a2, $t5
-				addi $a3, $a0, 3
+				addi $a3, $a0, 2
 				jal DrawHorizontalLine
 
 				lw $t6, 0($sp)
@@ -2497,552 +2468,537 @@ DrawPoint:
 		jr $ra
 
 
-# $a0 the x starting coordinate
-# $a1 the y coordinate
-# $a2 the color
-# $a3 the x ending coordinate
-
-#Atualiza o Score com +1, deve ser chamado quando o jogo tem uma linha excluida.
-AtualizaScore:
+#Desenha o Score conforme a variável na memória
+DrawScore:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-
-	#add $t0, $s0, 1
-	
-	lw $t2, Score
-
-	addi $t2, $t0, 1
-	
-	sw $t2, Score
 	jal LimpaScore
+	lw $a0, Score
+	li $a1, 3
+	jal GetDigit
+	move $a2, $a0
+	lw $a0, ScoreXBase
+	lw $a1, ScoreYBase
+	jal DrawNumber
 	
-	jal PegaDigito1
-	jal VerificaDigito1
+	lw $a0, Score
+	li $a1, 2
+	jal GetDigit
+	move $a2, $a0
+	lw $a0, ScoreXBase
+	addi $a0, $a0, 6
+	lw $a1, ScoreYBase
+	jal DrawNumber
 	
-	jal PegaDigito2
-	jal VerificaDigito2
+	lw $a0, Score
+	li $a1, 1
+	jal GetDigit
+	move $a2, $a0
+	lw $a0, ScoreXBase
+	addi $a0, $a0, 12
+	lw $a1, ScoreYBase
+	jal DrawNumber
 	
-	jal PegaDigito3
-	jal VerificaDigito3
+	lw $a0, Score
+	li $a1, 0
+	jal GetDigit
+	move $a2, $a0
+	lw $a0, ScoreXBase
+	addi $a0, $a0, 18
+	lw $a1, ScoreYBase
+	jal DrawNumber
 	
-
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
-
-#Pega o primeiro digito do numero para poder imprimir no score.
-PegaDigito1:
+	
+#Desenha um número dada uma posição (x,y) base e um digito
+#$a0: Coordenada x
+#$a1: Coordenada y
+#$a2: Número entre 0 e 9
+DrawNumber:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-
-	sw $zero, AuxModulus
-	sw $zero, AuxModulus2
-	li $t5, 1
-
-	add $t0, $s0, 10
-	add $t1, $s0, 1
+	move $t3, $a0
+	move $t4, $a1
 	
-	for:
-		beq $t1, $zero, result			#while(n>=1)
-		mul $t2, $t2, $t0			#x=*x
+	beq $a2, 0, SwitchNumber0
+	beq $a2, 1, SwitchNumber1
+	beq $a2, 2, SwitchNumber2
+	beq $a2, 3, SwitchNumber3
+	beq $a2, 4, SwitchNumber4
+	beq $a2, 5, SwitchNumber5
+	beq $a2, 6, SwitchNumber6
+	beq $a2, 7, SwitchNumber7
+	beq $a2, 8, SwitchNumber8
+	beq $a2, 9, SwitchNumber9
+	
+	SwitchNumber0:
+		addi $a0, $t3, 1 
+		move $a1, $t4
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		move $a0, $t3
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		move $a0, $t3
+		addi $a1, $t4, 2
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		move $a0, $t3
+		addi $a1, $t4, 3
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		move $a0, $t3
+		addi $a1, $t4, 4
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		move $a0, $t3
+		addi $a1, $t4, 5
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 4
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 4
+		addi $a1, $t4, 2
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 4
+		addi $a1, $t4, 3
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 4
+		addi $a1, $t4, 4
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 4
+		addi $a1, $t4, 5
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 1 
+		addi $a1, $t4, 6
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		j ExitSwitchNumber
+	SwitchNumber1:
+		addi $a0, $t3, 2
+		move $a1, $t4
+		lw $a2, corDigito
+		addi $a3, $a1, 5
+		jal DrawVerticalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 6
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		j ExitSwitchNumber
+	SwitchNumber2:
+		addi $a0, $t3, 1
+		move $a1, $t4
+		lw $a2, corDigito
+		addi $a3, $t3, 3
+		jal DrawHorizontalLine
 		
-		sub $t1, $t1, $t5			#n--
-		j for
-
-		result:
-			lw $t7, Score
-			div $t3, $t7, $t2
-
-			addi $t6, $t3, 0
-			sw $t6, AuxModulus
-			#addi AuxModuluz, $zero, $t3
-			
-			CalculaMod:
-					addi $sp, $sp, -4
-					sw $ra, 0($sp)
-
-					lw $t6, AuxModulus
-					addi $t0, $t6, 0
-					addi $t1, $zero, 10
-					addi $t2, $zero, 0
-					addi $t3, $zero, 2
-
-					L1:
-						beq $t0, $t1, L2    # while i < 9, compute
-						div $t0, $t3        # i mod 2
-						mfhi $t6            # temp for the mod
-						beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
-						add $t2, $t2, $t0   # k = k + i
-						
-					Lmod:
-						add $t0, $t0, 1     # i++
-						j L1                # repeat the while loop
-
-					L2:
-						sw $t2, AuxModulus2
-
-
-					lw $ra, 0($sp)
-					addi $sp, $sp, 4
-					jr $ra
-
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	jr $ra
-
-#Pega o segundo digito do numero para poder imprimir no score.
-PegaDigito2:
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
-
-	li $t5, 1
-	sw $zero, AuxModulus
-	sw $zero, AuxModulus2
-
-	add $t0, $s0, 10
-	add $t1, $s0, 2
+		move $a0, $t3
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
 		
-	for1:
-		beq $t1, $zero, result1			#while(n>=1)
+		move $a0, $t3
+		addi $a1, $t4, 6
+		lw $a2, corDigito
+		addi $a3, $a0, 4
+		jal DrawHorizontalLine
 		
-		mul $t2, $t2, $t0			#x=*x
-		sub $t1, $t1, $t5			#n--
+		addi $a0, $t3, 4
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		addi $a3, $a1, 1
+		jal DrawVerticalLine
+		
+		addi $a0, $t3, 3
+		addi $a1, $t4, 3
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		
+		addi $a0, $t3, 2
+		addi $a1, $t4, 4
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		
+		addi $a0, $t3, 1
+		addi $a1, $t4, 5
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		
+		j ExitSwitchNumber
+	SwitchNumber3:
+		move $a0, $t3
+		move $a1, $t4
+		lw $a2, corDigito
+		addi $a3, $t3, 4
+		jal DrawHorizontalLine
+		
+		addi $a0, $t3, 1
+		addi $a1, $t4, 6
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		
+		addi $a0, $t3, 4
+		addi $a1, $t4, 4
+		lw $a2, corDigito
+		addi $a3, $a1, 1
+		jal DrawVerticalLine
+		
+		move $a0, $t3
+		addi $a1, $t4, 5
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		
+		addi $a0, $t3, 3
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		
+		addi $a0, $t3, 2
+		addi $a1, $t4, 2
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		
+		addi $a0, $t3, 3
+		addi $a1, $t4, 3
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
 
-		j for1
+		j ExitSwitchNumber
+	SwitchNumber4:
+		addi $a0, $t3, 3
+		move $a1, $t4
+		lw $a2, corDigito
+		addi $a3, $t4, 6
+		jal DrawVerticalLine
+		
+		move $a0, $t3
+		addi $a1, $t4, 4
+		lw $a2, corDigito
+		addi $a3, $a0, 4
+		jal DrawHorizontalLine
+		
+		addi $a0, $t3, 2
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		
+		addi $a0, $t3, 1
+		addi $a1, $t4, 2
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		
+		addi $a0, $t3, 0
+		addi $a1, $t4, 3
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		
+		j ExitSwitchNumber
+	SwitchNumber5:
+		move $a0, $t3
+		move $a1, $t4
+		lw $a2, corDigito
+		addi $a3, $a0, 4
+		jal DrawHorizontalLine
+		move $a0, $t3
+		addi $a1, $t4, 2
+		lw $a2, corDigito
+		addi $a3, $a0, 3
+		jal DrawHorizontalLine
+		move $a0, $t3
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 6
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		move $a0, $t3
+		addi $a1, $t4, 5
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 4
+		addi $a1, $t4, 3
+		lw $a2, corDigito
+		addi $a3, $a1, 2
+		jal DrawVerticalLine
+		
+		j ExitSwitchNumber
+	SwitchNumber6:
+		addi $a0, $t3, 2
+		move $a1, $t4
+		lw $a2, corDigito
+		addi $a3, $a0, 1
+		jal DrawHorizontalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 3
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		move $a0, $t3
+		addi $a1, $t4, 2
+		lw $a2, corDigito
+		addi $a3, $a1, 3
+		jal DrawVerticalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 6
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		addi $a0, $t3, 4
+		addi $a1, $t4, 4
+		lw $a2, corDigito
+		addi $a3, $a1, 1
+		jal DrawVerticalLine
+		
+		j ExitSwitchNumber
+	SwitchNumber7:
+		move $a0, $t3
+		move $a1, $t4
+		lw $a2, corDigito
+		addi $a3, $a0, 4
+		jal DrawHorizontalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 4
+		lw $a2, corDigito
+		addi $a3, $a1, 2
+		jal DrawVerticalLine
+		
+		addi $a0, $t3, 4
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 3
+		addi $a1, $t4, 2
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 2
+		addi $a1, $t4, 3
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		
+		j ExitSwitchNumber
+	SwitchNumber8:
+		addi $a0, $t3, 1
+		move $a1, $t4
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 3
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 6
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		move $a0, $t3
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		addi $a3, $a1, 1
+		jal DrawVerticalLine
+		move $a0, $t3
+		addi $a1, $t4, 4
+		lw $a2, corDigito
+		addi $a3, $a1, 1
+		jal DrawVerticalLine
+		addi $a0, $t3, 4
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		addi $a3, $a1, 1
+		jal DrawVerticalLine
+		addi $a0, $t3, 4
+		addi $a1, $t4, 4
+		lw $a2, corDigito
+		addi $a3, $a1, 1
+		jal DrawVerticalLine
+		
+		j ExitSwitchNumber
+	SwitchNumber9:
+		addi $a0, $t3, 1
+		addi $a1, $t4, 0
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 3
+		lw $a2, corDigito
+		addi $a3, $a0, 2
+		jal DrawHorizontalLine
+		addi $a0, $t3, 0
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		addi $a3, $a1, 1
+		jal DrawVerticalLine
+		addi $a0, $t3, 4
+		addi $a1, $t4, 1
+		lw $a2, corDigito
+		addi $a3, $a1, 3
+		jal DrawVerticalLine
+		addi $a0, $t3, 3
+		addi $a1, $t4, 5
+		lw $a2, corDigito
+		move $a3, $a0
+		jal DrawHorizontalLine
+		addi $a0, $t3, 1
+		addi $a1, $t4, 6
+		lw $a2, corDigito
+		addi $a3, $a0, 1
+		jal DrawHorizontalLine
+		j ExitSwitchNumber
 
-		result1:
-			lw $t7, Score
-			div $t3, $t7, $t2
-
-			addi $t6, $t3, 0
-			sw $t6, AuxModulus
-			#addi AuxModuluz, $zero, $t3
-			
-			CalculaMod1:
-					addi $sp, $sp, -4
-					sw $ra, 0($sp)
-
-					lw $t6, AuxModulus
-					addi $t0, $t6, 0
-					addi $t1, $zero, 10
-					addi $t2, $zero, 0
-					addi $t3, $zero, 2
-
-					L11:
-						beq $t0, $t1, L2    # while i < 9, compute
-						div $t0, $t3        # i mod 2
-						mfhi $t6            # temp for the mod
-						beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
-						add $t2, $t2, $t0   # k = k + i
-					Lmod1:
-						add $t0, $t0, 1     # i++
-						j L1                # repeat the while loop
-
-					L21:
-						sw $t2, AuxModulus2
-
-
-					lw $ra, 0($sp)
-					addi $sp, $sp, 4
-					jr $ra
-
+	ExitSwitchNumber:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
 
-#Pega o terceiro digito do numero para poder imprimir no score.
-PegaDigito3:
+#Dá o n-ésimo digito dado um número qualquer e retorna em $a0
+#$a0: Número
+#$a1: Digito
+GetDigit:
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
-
-	li $t5, 1
-	sw $zero, AuxModulus
-	sw $zero, AuxModulus2
-
-	add $t0, $s0, 10
-	add $t1, $s0, 3
 	
-	for2:
-		beq $t1, $zero, result2				#while(n>=1)
-
-		mul $t2, $t2, $t0				#x=*x
-		sub $t1, $t1, $t5				#n--
-
-		j for2
-
-		result2:
-			lw $t7, Score
-			div $t3, $t7, $t2
-			addi $t6, $t3, 0
-			sw $t6, AuxModulus
-			#addi AuxModuluz, $zero, $t3
-			
-			CalculaMod2:
-					addi $sp, $sp, -4
-					sw $ra, 0($sp)
-
-					lw $t6, AuxModulus
-					addi $t0, $t6, 0
-					addi $t1, $zero, 10
-					addi $t2, $zero, 0
-					addi $t3, $zero, 2
-
-					L12:
-						beq $t0, $t1, L2    # while i < 9, compute
-						div $t0, $t3        # i mod 2
-						mfhi $t6            # temp for the mod
-						beq $t6, 0, Lmod    # if mod == 0, jump over to Lmod and increment
-						add $t2, $t2, $t0   # k = k + i
-					Lmod2:
-						add $t0, $t0, 1     # i++
-						j L1                # repeat the while loop
-
-					L22:
-						sw $t2, AuxModulus2
-
-
-					lw $ra, 0($sp)
-					addi $sp, $sp, 4
-					jr $ra
-
+	li $t0, 0
+	li $t2, 10
+	move $t1, $a0
+	GetDigitILoop:
+		beq $t0, $a1, ExitDigitLoop
+		div $t1, $t2
+		mflo $t1
+		addi $t0,, $t0, 1
+		j GetDigitILoop
+	ExitDigitLoop:
+	div $t1, $t2
+	mfhi $a0
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
-#Descobre que numero do digito 1 e chama a funcao para imprimir o digito 1.
-VerificaDigito1:
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
-	
-	lw $t0, AuxModulus2
-	
-	li $a0, 42 #x
-	li $a1 40 #y
-	lw $a2, corMargem
-	li $a3, 42 #x
-	
-	beq $t0, 0, Desenha0
-	beq $t0, 1, Desenha1
-	beq $t0, 2, Desenha2
-	beq $t0, 3, Desenha3
-	beq $t0, 5, Desenha5
-	beq $t0, 6, Desenha6
-	beq $t0, 7, Desenha7
-	beq $t0, 8, Desenha8
-	beq $t0, 9, Desenha9
 	
 	
-	
-	
-	addi $sp, $sp, 4
-	jr $ra
-
-#Descobre que numero do digito 2 e chama a funcao para imprimir o digito 2.
-VerificaDigito2:
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
-	
-	lw $t0, AuxModulus2
-	
-	li $a0, 47 #x
-	li $a1 40 #y
-	lw $a2, corMargem
-	li $a3, 47 #x
-	
-	beq $t0, 0, Desenha0
-	beq $t0, 1, Desenha1
-	beq $t0, 2, Desenha2
-	beq $t0, 3, Desenha3
-	beq $t0, 5, Desenha5
-	beq $t0, 6, Desenha6
-	beq $t0, 7, Desenha7
-	beq $t0, 8, Desenha8
-	beq $t0, 9, Desenha9
-	
-	addi $sp, $sp, 4
-	jr $ra
-
-#Descobre que numero do digito 3 e chama a funcao para imprimir o digito 3.	
-VerificaDigito3:
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
-	
-	lw $t0, AuxModulus2
-	
-	li $a0, 52 #x
-	li $a1 40	#y
-	lw $a2, corMargem
-	li $a3, 52 #x
-	
-	beq $t0, 0, Desenha0
-	beq $t0, 1, Desenha1
-	beq $t0, 2, Desenha2
-	beq $t0, 3, Desenha3
-	beq $t0, 5, Desenha5
-	beq $t0, 6, Desenha6
-	beq $t0, 7, Desenha7
-	beq $t0, 8, Desenha8
-	beq $t0, 9, Desenha9
-	
-	addi $sp, $sp, 4
-	jr $ra
-
-#Imprime o digito 0 conforme as cordenadas estabelecidas.
-Desenha0:
-	addi $a0, $a0, 1
-	addi $a3, $a3, 2
-	jal DrawHorizontalLine
-	subi $a0, $a0, 1#Volta
-	subi $a3, $a3, 2#Volta
-	
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a0, $a0, 2
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	subi $a0, $a0, 2
-	subi $a3, $a3, 3
-	
-	addi $a1, $a1, 1
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	subi $a3, $a3, 3
-	
-	addi $a1, $a1, 1
-	addi $a3, $a3, 1
-	jal DrawHorizontalLine
-	addi $a0, $a0, 3
-	addi $a3, $a3, 2
-	jal DrawHorizontalLine
-	subi $a3, $a3, 3
-	subi $a0, $a0, 3
-	
-	addi $a1, $a1, 1
-	addi $a3, $a3, 2
-	addi $a0, $a0, 1
-	jal DrawHorizontalLine
-	subi $a3, $a3, 2
-	subi $a0, $a0, 1
-	
-	jr $ra
-	
-#Imprime o digito 1 conforme as cordenadas estabelecidas.
-Desenha1:
-	addi $a0, $a0, 3
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	subi $a0, $a0, 1
-	jal DrawHorizontalLine
-	
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	
-	jr $ra
-	
-#Imprime o digito 2 conforme as cordenadas estabelecidas.
-Desenha2:
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	addi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	subi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	subi $a3, $a3, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	
-	jr $ra
-			
-#Imprime o digito 3 conforme as cordenadas estabelecidas.
-Desenha3:
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	addi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	subi $a0, $a0, 2
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a0, $a0, 2
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	subi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	
-	jr $ra
-	
-#Imprime o digito 4 conforme as cordenadas estabelecidas.
-Desenha4:
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a3, $a3, 2
-	addi $a0, $a0, 2
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	subi $a3, $a3, 2
-	subi $a0, $a0, 2
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	addi $a0, $a0, 2
-	subi $a3, $a3, 1
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	
-	jr $ra
-	
-#Imprime o digito 5 conforme as cordenadas estabelecidas.
-Desenha5:
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	subi $a3, $a3, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a3, $a3, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	subi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	
-	jr $ra
-	
-#Imprime o digito 6 conforme as cordenadas estabelecidas.
-Desenha6:
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	subi $a3, $a3, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a3, $a3, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	subi $a3, $a3, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a3, $a3, 3
-	addi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	subi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	
-	jr $ra
-
-#Imprime o digito 7 conforme as cordenadas estabelecidas.
-Desenha7:
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	addi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	
-	jr $ra
-	
-#Imprime o digito 8 conforme as cordenadas estabelecidas.
-Desenha8:
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	subi $a3, $a3, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a3, $a3, 3
-	addi $a0, $a0, 3
-	jal DrawHorizontalLine
-	subi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	subi $a3, $a3, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a3, $a3, 3
-	addi $a0, $a0, 3
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	subi $a0, $a0, 3
-	jal DrawHorizontalLine
-	
-	jr $ra
-	
-#Imprime o digito 9 conforme as cordenadas estabelecidas.
-Desenha9:
-	addi $a3, $a3, 3
-	jal DrawHorizontalLine
-	subi $a3, $a3, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a3, $a3, 3
-	addi $a0, $a0, 3
-	jal DrawHorizontalLine
-	subi $a0, $a0, 3
-	addi $a1, $a1, 1
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	addi $a0, $a0, 3
-	jal DrawHorizontalLine
-	addi $a1, $a1, 1
-	subi $a0, $a0, 3
-	jal DrawHorizontalLine
-	
-	jr $ra
-
 #Limpa toda a area de Score(pinta tudo de preto)
-LimpaScore:	
-	li $a0, 41 #Comeco de x
-	li $a1 40 #Comeco de Y
+LimpaScore:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+		
+		
+	lw $a0, ScoreXBase
+	addi $a0, $a0, -1
+	lw $a1, ScoreYBase
+	addi $a1, $a1, -1
 	lw $a2, corFundo
-	li $a3, 57 #Limite de x
+	li $a3, 62 #Limite de x
+	jal DrawHorizontalLine
+	lw $a0, ScoreXBase
+	addi $a0, $a0,-1
+	lw $a1, ScoreYBase
+	addi $a1, $a1, 0
+	lw $a2, corFundo
+	li $a3, 62 #Limite de x
+	jal DrawHorizontalLine
+	lw $a0, ScoreXBase
+	addi $a0, $a0,-1
+	lw $a1, ScoreYBase
+	addi $a1, $a1, 1
+	lw $a2, corFundo
+	li $a3, 62 #Limite de x
+	jal DrawHorizontalLine
+	lw $a0, ScoreXBase
+	addi $a0, $a0,-1
+	lw $a1, ScoreYBase
+	addi $a1, $a1, 2
+	lw $a2, corFundo
+	li $a3, 62 #Limite de x
+	jal DrawHorizontalLine
+	lw $a0, ScoreXBase
+	addi $a0, $a0,-1
+	lw $a1, ScoreYBase
+	addi $a1, $a1, 3
+	lw $a2, corFundo
+	li $a3, 62 #Limite de x
+	jal DrawHorizontalLine
+	lw $a0, ScoreXBase
+	addi $a0, $a0,-1
+	lw $a1, ScoreYBase
+	addi $a1, $a1, 4
+	lw $a2, corFundo
+	li $a3, 62 #Limite de x
+	jal DrawHorizontalLine
+	lw $a0, ScoreXBase
+	addi $a0, $a0,-1
+	lw $a1, ScoreYBase
+	addi $a1, $a1, 5
+	lw $a2, corFundo
+	li $a3, 62 #Limite de x
+	jal DrawHorizontalLine
+	lw $a0, ScoreXBase
+	addi $a0, $a0,-1
+	lw $a1, ScoreYBase
+	addi $a1, $a1, 6
+	lw $a2, corFundo
+	li $a3, 62 #Limite de x
+	jal DrawHorizontalLine
+	lw $a0, ScoreXBase
+	addi $a0, $a0,-1
+	lw $a1, ScoreYBase
+	addi $a1, $a1, 7
+	lw $a2, corFundo
+	li $a3, 62 #Limite de x
 	jal DrawHorizontalLine
 
-	li $a0, 41
-	li $a1 41
-	lw $a2, corFundo
-	li $a3, 57
-	jal DrawHorizontalLine
 
-	li $a0, 41
-	li $a1 42
-	lw $a2, corFundo
-	li $a3, 57
-	jal DrawHorizontalLine
-
-	li $a0, 41
-	li $a1 43
-	lw $a2, corFundo
-	li $a3, 57
-	jal DrawHorizontalLine
-
-	li $a0, 41
-	li $a1 44
-	lw $a2, corFundo
-	li $a3, 57
-	jal DrawHorizontalLine
 	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
 	jr $ra
