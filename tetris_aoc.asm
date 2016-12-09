@@ -80,10 +80,10 @@ main:
 ###########################################################
 #			Controles			  #
 # 1 - Mover para Esquerda	#49#		  	  #
-# 2 - Mover para Direita	#50#		  	  #
-# 3 - Rotacionar Peça   	#51#		  	  #
-# 4 - Drop			#52#		  	  #
-# 5 - Restart Game		#53#		  	  #
+# 3 - Mover para Direita	#51#		  	  #
+# Space Bar - Drop		#32#		  	  #
+# 2 - Rotacionar Peça   	#50#		  	  #
+# 9 - Restart Game		#57#		  	  #
 ###########################################################
 
 GameLoop:
@@ -94,10 +94,10 @@ GameLoop:
 		#Ler botão e fazer ação se houver
 		lw $t1, 0xFFFF0004
 		beq $t1, 49, ButtonSwitch1
-		beq $t1, 50, ButtonSwitch2
-		beq $t1, 51, ButtonSwitch3
-		beq $t1, 52, ButtonSwitch4
-		beq $t1, 53, ButtonSwitch5
+		beq $t1, 51, ButtonSwitch2
+		beq $t1, 32, ButtonSwitch3
+		beq $t1, 50, ButtonSwitch4
+		beq $t1, 57, ButtonSwitch5
 		j ButtonSwitchExit
 		ButtonSwitch1:
 			jal CheckLeftBoundary
