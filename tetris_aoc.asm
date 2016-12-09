@@ -181,8 +181,13 @@ GameLoop:
 		
 		
 	ExitGame:
-		
-	li $a0, 0
+	GameOverLoop:
+		lw $t1, 0xFFFF0004
+		beqz $t1, GameOverLoop
+	jal ZeraBotoes
+	addi $sp, $sp, 4
+	j main
+
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
@@ -3005,3 +3010,4 @@ LimpaScore:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	jr $ra
+
