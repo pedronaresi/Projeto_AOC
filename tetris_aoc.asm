@@ -143,6 +143,9 @@ GameLoop:
 		
 		DoAfter:
 		jal ZeraBotoes
+		lw $t1, Tick
+		addi $t1, $t1, 4000
+		sw $t1, Tick
 		
 		ButtonSwitchExit:
 		
