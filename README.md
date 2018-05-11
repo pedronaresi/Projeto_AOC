@@ -1,16 +1,15 @@
-# Organization and Computer Architecture Final Project - 12/2016
-TETRIS® recreation built in Assembly for "Organization and Computer Architecture" class. 🕹️
+# TETRIS® Assembly
+TETRIS® recreation built in Assembly for "Organization and Computer Architecture" class of 2016. 🕹️
 
 *Read this in other languages: [English](README.md), [Portuguese](README.pt-BR.md).*
 
-# Contribuidores:
-Jaime Ossada, Pedro Naresi, Bruno Ogata, Joao Mesquita
+# Contributors:
+[Bruno Ogata](https://github.com/brunoogata)
+[Jaime Ossada](https://github.com/JaimeJnior)
+[Pedro Naresi](https://github.com/pedronaresi)
 
 # O Projeto:
 Releitura de um clássico dos dias sem Internet: O jogo do Dinossauro do Chrome.
-
-#A Execução:
-O projeto será programado inteiramente em "Assembly" usando a arquitetura MIPS.
 
 #Links:
 * Link para o download do Mars: http://courses.missouristate.edu/KenVollmar/mars/
