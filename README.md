@@ -1,7 +1,7 @@
-*Read this in other languages: [English](README.md), [Portuguese](README.pt-BR.md).*
+# Organization and Computer Architecture Final Project - 12/2016
+TETRIS® recreation built in Assembly for "Organization and Computer Architecture" class. 🕹️
 
-# Projeto Arquitetura e Organização de Computadores
-Repositório para o projeto final de Arquitetura e Organização de Computadores .
+*Read this in other languages: [English](README.md), [Portuguese](README.pt-BR.md).*
 
 # Contribuidores:
 Jaime Ossada, Pedro Naresi, Bruno Ogata, Joao Mesquita
