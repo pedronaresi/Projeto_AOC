@@ -1,7 +1,7 @@
 # Projeto Arquitetura e Organização de Computadores
 Repositório para o projeto final de Arquitetura e Organização de Computadores .
 
-*Read this in other languages: [English](README.md), [Português](README.pt-BR.md).*
+*Read this in other languages: [English](README.md), [Portuguese](README.pt-BR.md).*
 
 # Contribuidores:
 Jaime Ossada, Pedro Naresi, Bruno Ogata, Joao Mesquita
