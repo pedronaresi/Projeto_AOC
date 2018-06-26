@@ -1,4 +1,4 @@
-# TETRIS® Assembly
+# TETRIS® Assembly ![CI status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 TETRIS® recreation built in Assembly for "Organization and Computer Architecture" course of 2016 at the Institute of Science and Technology at Federal University of São Paulo (UNIFESP). 🕹️
 
 *Read this in other languages: [English](README.md), [Portuguese](README.pt-BR.md).*
